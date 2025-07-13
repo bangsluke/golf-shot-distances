@@ -1,106 +1,97 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LabelList
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
 } from 'recharts';
-import { Dialog } from '@headlessui/react';
+import { ClubEditModal } from './components/ClubEditModal';
+import type { ClubData } from './components/ClubEditModal';
+import { CustomTooltip } from './components/CustomTooltip';
+import { ClickableYAxisTick } from './components/ClickableYAxisTick';
+import { CustomLegend } from './components/CustomLegend';
 import './index.css';
 
 const API_URL = 'http://localhost:4000/api/clubs';
 
-const BAR_COLORS = [
-  '#60a5fa', // blue-400
-  '#fbbf24', // yellow-400
-  '#34d399', // green-400
-  '#f87171', // red-400
-  '#a78bfa', // purple-400
-  '#f472b6', // pink-400
-  '#facc15', // yellow-300
-];
+const BAR_COLORS = {
+  'Average Flat Carry (Yards)': '#60a5fa', // blue-400
+  'Carry (Yards)': '#3b82f6', // blue-600
+  'Overhit Risk (Yards)': '#ef4444', // red-500
+};
+
+const LINE_COLOR = '#22c55e'; // green-500
 
 const DISTANCE_FIELDS = [
   'Average Flat Carry (Yards)',
-  'Max Flat Carry (Yards)',
-  'Average Total Distance Hit (Yards)',
-  'Max Total Distance Hit (Yards)',
   'Carry (Yards)',
   'Overhit Risk (Yards)'
+] as const;
+
+const LINE_FIELD = 'Average Total Distance Hit (Yards)';
+
+const COURSE_CONDITIONS = [
+  { label: 'Normal conditions', value: 'normal', factor: 1 },
+  { label: 'Dry conditions', value: 'dry', factor: 1.5 },
+  { label: 'Very dry conditions', value: 'verydry', factor: 2 },
+  { label: 'Wet conditions', value: 'wet', factor: 0.5 },
+  { label: 'Very wet conditions', value: 'verywet', factor: 0 },
 ];
 
-function ClubEditModal({ open, onClose, club, onSave }: any) {
-  const [form, setForm] = useState(club || {});
+const COURSE_CONDITION_INFO = [
+  { label: 'Normal conditions', desc: 'No adjustment to carry distance.' },
+  { label: 'Dry conditions', desc: 'Increase carry by 50%.' },
+  { label: 'Very dry conditions', desc: 'Increase carry by 100%.' },
+  { label: 'Wet conditions', desc: 'Decrease carry by 50%.' },
+  { label: 'Very wet conditions', desc: 'Decrease carry by 100% (carry is 0).' },
+];
 
-  useEffect(() => {
-    setForm(club || {});
-  }, [club]);
+const AIR_CONDITIONS = [
+  { label: 'Normal conditions', value: 'normal' },
+  { label: 'Rainy conditions', value: 'rainy' },
+  { label: 'Windy conditions', value: 'windy' },
+];
 
-  if (!club) return null;
+const AIR_CONDITION_INFO = [
+  { label: 'Normal conditions', desc: 'No adjustment to values.' },
+  { label: 'Rainy conditions', desc: 'Reduce average flat carry by 10%.' },
+  { label: 'Windy conditions', desc: 'Increase overhit risk by 20%.' },
+];
 
+function InfoTooltip() {
   return (
-    <Dialog open={open} onClose={onClose} className="fixed z-10 inset-0 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
-        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-auto p-6 z-20">
-          <Dialog.Title className="text-lg font-bold mb-4">Edit {club['Club']}</Dialog.Title>
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              onSave(form);
-            }}
-            className="space-y-3"
-          >
-            {DISTANCE_FIELDS.map(field => (
-              <div key={field}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">{field}</label>
-                <input
-                  type="number"
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-white shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={form[field] || ''}
-                  onChange={e => setForm({ ...form, [field]: e.target.value })}
-                />
-              </div>
-            ))}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Comments</label>
-              <input
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-white shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                value={form['Comments'] || ''}
-                onChange={e => setForm({ ...form, ['Comments']: e.target.value })}
-              />
-            </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </Dialog>
+    <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-700">
+      <div className="font-bold mb-2">Course conditions:</div>
+      <ul className="list-disc pl-4 space-y-1">
+        {COURSE_CONDITION_INFO.map(item => (
+          <li key={item.label}><span className="font-semibold">{item.label}:</span> {item.desc}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
-function CustomTooltip({ active, payload, label }: any) {
-  if (active && payload && payload.length) {
-    const club = payload[0].payload;
-    return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded shadow-lg border border-gray-200 dark:border-gray-700">
-        <div className="font-bold mb-2">{club['Club']}</div>
-        {DISTANCE_FIELDS.map((field, i) => (
-          <div key={field} className="text-sm"><span className="font-medium">{field}:</span> {club[field]}</div>
+function AirInfoTooltip() {
+  return (
+    <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-700">
+      <div className="font-bold mb-2">Air conditions:</div>
+      <ul className="list-disc pl-4 space-y-1">
+        {AIR_CONDITION_INFO.map(item => (
+          <li key={item.label}><span className="font-semibold">{item.label}:</span> {item.desc}</li>
         ))}
-        <div className="text-xs text-gray-500 mt-2">{club['Comments']}</div>
-      </div>
-    );
-  }
-  return null;
+      </ul>
+    </div>
+  );
 }
 
 function App() {
-  const [clubs, setClubs] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<ClubData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editClub, setEditClub] = useState<any>(null);
+  const [editClub, setEditClub] = useState<ClubData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [courseCondition, setCourseCondition] = useState('normal');
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [airCondition, setAirCondition] = useState('normal');
+  const [showAirTooltip, setShowAirTooltip] = useState(false);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   const fetchClubs = async () => {
     setLoading(true);
@@ -113,61 +104,158 @@ function App() {
     fetchClubs();
   }, []);
 
-  const handleEdit = (club: any) => {
+  const handleEdit = (club: ClubData) => {
     setEditClub(club);
     setModalOpen(true);
   };
 
-  const handleSave = async (updated: any) => {
+  const handleSave = async (updated: ClubData) => {
     await axios.put(`${API_URL}/${encodeURIComponent(updated['Club'])}`, updated);
     setModalOpen(false);
     setEditClub(null);
     fetchClubs();
   };
 
+  const chartHeight = 500;
+  const yAxisTopMargin = 30; // matches chart margin.top
+  const yAxisBottomMargin = 30; // matches chart margin.bottom
+
+  // Adjust Carry (Yards) based on course condition
+  const carryFactor = COURSE_CONDITIONS.find(c => c.value === courseCondition)?.factor ?? 1;
+  // Adjust Average Flat Carry and Overhit Risk based on air condition
+  const chartData = clubs.map(club => {
+    const carry = parseFloat(club['Carry (Yards)']) * carryFactor;
+    let avgFlatCarry = parseFloat(club['Average Flat Carry (Yards)']);
+    let overhitRisk = parseFloat(club['Overhit Risk (Yards)']);
+    if (airCondition === 'rainy') {
+      avgFlatCarry = avgFlatCarry * 0.9;
+    }
+    if (airCondition === 'windy') {
+      overhitRisk = overhitRisk * 1.2;
+    }
+    return {
+      ...club,
+      'Carry (Yards)': carry.toFixed(0),
+      'Average Flat Carry (Yards)': avgFlatCarry.toFixed(0),
+      'Overhit Risk (Yards)': overhitRisk.toFixed(0),
+    };
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-200 dark:from-gray-900 dark:to-gray-800 p-6">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-center text-blue-900 dark:text-white">Golf Club Distances</h1>
+    <div className="min-h-screen p-6">
+      <div className="golf-main max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label htmlFor="course-conditions" className="font-semibold text-white text-sm">Course conditions</label>
+              <select
+                id="course-conditions"
+                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                value={courseCondition}
+                onChange={e => setCourseCondition(e.target.value)}
+              >
+                {COURSE_CONDITIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <div className="relative ml-2">
+                <button
+                  type="button"
+                  aria-label="Course conditions info"
+                  className="text-gray-400 hover:text-blue-400 focus:outline-none"
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  onFocus={() => setShowTooltip(true)}
+                  onBlur={() => setShowTooltip(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
+                </button>
+                {showTooltip && <InfoTooltip />}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="air-conditions" className="font-semibold text-white text-sm">Air conditions</label>
+              <select
+                id="air-conditions"
+                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                value={airCondition}
+                onChange={e => setAirCondition(e.target.value)}
+              >
+                {AIR_CONDITIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <div className="relative ml-2">
+                <button
+                  type="button"
+                  aria-label="Air conditions info"
+                  className="text-gray-400 hover:text-blue-400 focus:outline-none"
+                  onMouseEnter={() => setShowAirTooltip(true)}
+                  onMouseLeave={() => setShowAirTooltip(false)}
+                  onFocus={() => setShowAirTooltip(true)}
+                  onBlur={() => setShowAirTooltip(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
+                </button>
+                {showAirTooltip && <AirInfoTooltip />}
+              </div>
+            </div>
+          </div>
+        </div>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2 text-center text-blue-900 dark:text-white">
+          Average Club Distances
+        </h1>
         {loading ? (
           <div className="text-center text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6">
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={clubs} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                <XAxis dataKey="Club" tick={{ fontSize: 12, fill: '#1e293b' }} />
-                <YAxis tick={{ fontSize: 12, fill: '#1e293b' }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
+          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6" ref={chartRef}>
+            <CustomLegend />
+            <ResponsiveContainer width="100%" height={chartHeight}>
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: yAxisTopMargin, right: 40, left: 120, bottom: yAxisBottomMargin }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" tick={{ fontSize: 12, fill: '#fff' }} domain={[0, 'dataMax + 30']} />
+                <YAxis
+                  type="category"
+                  dataKey="Club"
+                  tick={(props) => <ClickableYAxisTick {...props} clubs={clubs} onEdit={handleEdit} />}
+                  tickLine={false}
+                  width={80}
+                />
+                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
                 {DISTANCE_FIELDS.map((field, i) => (
-                  <Bar key={field} dataKey={field} stackId="a" fill={BAR_COLORS[i % BAR_COLORS.length]}>
-                    <LabelList dataKey={field} position="top" style={{ fontSize: 10, fill: '#334155' }} />
+                  <Bar
+                    key={field}
+                    dataKey={field}
+                    stackId="a"
+                    fill={BAR_COLORS[field]}
+                    barSize={22}
+                    radius={i === 0 ? [10, 10, 10, 10] : 0}
+                    isAnimationActive={false}
+                  >
+                    <LabelList
+                      dataKey={field}
+                      position="right"
+                      style={{ fontSize: 12, fill: BAR_COLORS[field] === '#ef4444' ? '#ef4444' : '#fff', fontWeight: BAR_COLORS[field] === '#ef4444' ? 700 : 500 }}
+                      formatter={(label: React.ReactNode) => (typeof label === 'string' && label !== '0' ? label : '')}
+                    />
                   </Bar>
                 ))}
+                <Line
+                  type="monotone"
+                  dataKey={LINE_FIELD}
+                  stroke={LINE_COLOR}
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: LINE_COLOR, stroke: '#fff', strokeWidth: 2 }}
+                  activeDot={{ r: 7 }}
+                  isAnimationActive={false}
+                  label={{ position: 'top', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
+                />
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {clubs.map((club, idx) => (
-                <div key={club['Club']} className="bg-blue-50 dark:bg-gray-800 rounded-lg p-4 flex flex-col shadow border border-blue-100 dark:border-gray-700">
-                  <div className="font-bold text-lg text-blue-900 dark:text-white">{club['Club']}</div>
-                  <div className="text-xs text-gray-500 mb-2">{club['Comments']}</div>
-                  <div className="flex-1">
-                    {DISTANCE_FIELDS.map((field, i) => (
-                      <div key={field} className="flex justify-between text-sm py-0.5">
-                        <span className="text-gray-700 dark:text-gray-200">{field}:</span>
-                        <span className="font-mono text-blue-700 dark:text-blue-300">{club[field]}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    className="mt-3 px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium self-end"
-                    onClick={() => handleEdit(club)}
-                  >
-                    Edit
-                  </button>
-                </div>
-              ))}
-            </div>
           </div>
         )}
         <ClubEditModal
@@ -175,6 +263,8 @@ function App() {
           onClose={() => setModalOpen(false)}
           club={editClub}
           onSave={handleSave}
+          distanceFields={DISTANCE_FIELDS as unknown as string[]}
+          lineField={LINE_FIELD}
         />
       </div>
     </div>

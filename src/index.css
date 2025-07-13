@@ -27,11 +27,41 @@ a:hover {
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  background: #18181b;
   min-height: 100vh;
+  color: #fff;
+}
+
+body::before {
+  content: none;
+}
+
+/* Ensure main wrapper is above background pattern */
+.golf-main {
+  position: relative;
+  z-index: 1;
+}
+
+/* White axis lines for recharts */
+.recharts-cartesian-axis-line, .recharts-cartesian-axis-tick-line {
+  stroke: #fff !important;
+}
+
+/* White axis label text */
+.recharts-yAxis .recharts-cartesian-axis-tick text,
+.recharts-xAxis .recharts-cartesian-axis-tick text {
+  fill: #fff !important;
+}
+
+/* Opaque tooltip */
+.recharts-tooltip-wrapper .custom-tooltip {
+  background: #222 !important;
+  color: #fff !important;
+  opacity: 0.98 !important;
+  border-radius: 0.5rem;
+  border: 1px solid #444;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  padding: 1rem;
 }
 
 h1 {

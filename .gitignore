@@ -27,3 +27,6 @@ dist-ssr
 .env
 # However, we do want to commit the example env file
 !.env.example
+
+# Hide the service account key
+backend/service-account.json
