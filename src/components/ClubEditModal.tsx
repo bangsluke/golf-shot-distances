@@ -1,5 +1,6 @@
 import { Dialog } from '@headlessui/react';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface ClubData {
   Club: string;
@@ -27,12 +28,16 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
   const [showWarn, setShowWarn] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  console.log('ClubEditModal render - open:', open, 'club:', club);
+
   useEffect(() => {
+    console.log('ClubEditModal useEffect - club changed:', club);
     setForm(club || ({} as ClubData));
     setDirty(false);
   }, [club]);
 
-  if (!club) return null;
+  // Remove the early return that prevents rendering when club is null
+  // if (!club) return null;
 
   const handleFieldChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -52,10 +57,18 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
     onClose();
   };
 
-  return (
-    <Dialog open={open} onClose={handleClose} className="fixed z-50 inset-0 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 bg-gray-900 bg-opacity-95">
-        <Dialog.Panel className="relative w-full max-w-2xl mx-auto bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 z-20 min-h-[80vh] flex flex-col">
+  // Only render the modal content if we have a club and modal is open
+  if (!club || !open) {
+    console.log('ClubEditModal not rendering - club:', club, 'open:', open);
+    return null;
+  }
+
+  console.log('ClubEditModal rendering modal content');
+
+  const modalContent = (
+    <Dialog open={open} onClose={handleClose} className="fixed z-[999999] inset-0 overflow-y-auto">
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style={{ zIndex: 999999 }}>
+        <Dialog.Panel className="relative w-full max-w-2xl mx-auto bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 z-[999999] min-h-[80vh] flex flex-col" style={{ zIndex: 999999 }}>
           <button
             className="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-2xl font-bold focus:outline-none"
             onClick={handleClose}
@@ -99,7 +112,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
           </form>
         </Dialog.Panel>
         {showWarn && (
-          <div className="fixed inset-0 flex items-center justify-center z-60 bg-black/60">
+          <div className="fixed inset-0 flex items-center justify-center z-[999999] bg-black/60" style={{ zIndex: 999999 }}>
             <div className="bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 max-w-sm w-full">
               <div className="font-bold text-lg mb-4">Unsaved changes</div>
               <div className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</div>
@@ -113,4 +126,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
       </div>
     </Dialog>
   );
+
+  // Use portal to render modal directly in document body
+  return createPortal(modalContent, document.body);
 } 

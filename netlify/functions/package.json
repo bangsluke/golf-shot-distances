@@ -1,0 +1,9 @@
+{
+  "name": "golf-shot-distances-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for golf shot distances app",
+  "main": "api.js",
+  "dependencies": {
+    "googleapis": "^128.0.0"
+  }
+} 

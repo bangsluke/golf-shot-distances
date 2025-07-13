@@ -12,7 +12,10 @@ import { CourseInfoTooltip } from './components/CourseInfoTooltip';
 import { AirInfoTooltip } from './components/AirInfoTooltip';
 import './index.css';
 
-const API_URL = 'http://localhost:4000/api/clubs';
+// Use Netlify function URL in production, localhost in development
+const API_URL = import.meta.env.PROD 
+  ? '/api/clubs' 
+  : 'http://localhost:4000/api/clubs';
 
 const BAR_COLORS = {
   'Average Flat Carry (Yards)': '#60a5fa', // blue-400
@@ -66,9 +69,17 @@ function App() {
     fetchClubs();
   }, []);
 
+  // Debug modal state changes
+  useEffect(() => {
+    console.log('Modal state changed - modalOpen:', modalOpen, 'editClub:', editClub);
+  }, [modalOpen, editClub]);
+
   const handleEdit = (club: ClubData) => {
+    console.log('handleEdit called with club:', club);
+    console.log('Setting editClub and modalOpen to true');
     setEditClub(club);
     setModalOpen(true);
+    console.log('Current modalOpen state should be true');
   };
 
   const handleSave = async (updated: ClubData) => {
@@ -88,20 +99,20 @@ function App() {
   if (carryFactor === 1) carryLabel = 'Carry ±0%';
   else if (carryFactor > 1) carryLabel = `Carry +${Math.round((carryFactor - 1) * 100)}%`;
   else carryLabel = `Carry ${Math.round((carryFactor - 1) * 100)}%`;
-  const carryLabelColor = carryFactor > 1 ? 'text-green-500' : carryFactor < 1 ? 'text-red-500' : 'text-gray-400';
+  const carryLabelColor = carryFactor > 1 ? '#22c55e' : carryFactor < 1 ? '#ef4444' : '#9ca3af';
 
   // Compute air condition factor and label
   let airLabel = '';
-  let airLabelColor = 'text-gray-400';
+  let airLabelColor = '#9ca3af';
   if (airCondition === 'rainy') {
     airLabel = 'Avg Flat Carry -10%';
-    airLabelColor = 'text-red-500';
+    airLabelColor = '#ef4444';
   } else if (airCondition === 'windy') {
     airLabel = 'Overhit Risk +20%';
-    airLabelColor = 'text-green-500';
+    airLabelColor = '#22c55e';
   } else {
     airLabel = 'No adjustment';
-    airLabelColor = 'text-gray-400';
+    airLabelColor = '#9ca3af';
   }
 
   // Adjust Average Flat Carry and Overhit Risk based on air condition
@@ -120,18 +131,23 @@ function App() {
     if (airCondition === 'windy') {
       overhitRisk = overhitRisk * 1.2;
     }
+
+    // Calculate adjusted Average Total Distance Hit based on the formula: Average Total Distance Hit = Average Flat Carry + Carry
+    const adjustedAvgTotalDistance = avgFlatCarry + carry;
+
     return {
       ...club,
       'Carry (Yards)': carry.toFixed(0),
       'Average Flat Carry (Yards)': avgFlatCarry.toFixed(0),
       'Overhit Risk (Yards)': overhitRisk.toFixed(0),
+      'Average Total Distance Hit (Yards)': adjustedAvgTotalDistance.toFixed(0),
     };
   });
 
   return (
     <div className="min-h-screen p-6">
       <div className="golf-main max-w-5xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center text-blue-900 dark:text-white">
+        <h1 className="text-xl md:text-xl font-bold mb-6 text-center text-blue-900 dark:text-white">
           Average Club Distances
         </h1>
         <div className="flex flex-col md:flex-row md:justify-center gap-8 mb-8 items-start w-full">
@@ -148,7 +164,7 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className={`text-xs font-semibold ${carryLabelColor}`}>{carryLabel}</div>
+              <div className={`text-xs font-semibold`} style={{ color: carryLabelColor }}>{carryLabel}</div>
               <div className="relative">
                 <button
                   type="button"
@@ -178,7 +194,7 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className={`text-xs font-semibold ${airLabelColor}`}>{airLabel}</div>
+              <div className={`text-xs font-semibold`} style={{ color: airLabelColor }}>{airLabel}</div>
               <div className="relative">
                 <button
                   type="button"
@@ -232,6 +248,7 @@ function App() {
                     radius={0}
                     isAnimationActive={true}
                     animationDuration={600}
+                    style={{ cursor: 'pointer' }}
                   >
                     <LabelList
                       dataKey={field}
@@ -251,6 +268,7 @@ function App() {
                   isAnimationActive={true}
                   animationDuration={600}
                   label={{ position: 'top', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
+                  style={{ cursor: 'pointer' }}
                 />
               </BarChart>
             </ResponsiveContainer>
