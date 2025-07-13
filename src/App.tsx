@@ -136,11 +136,11 @@ function App() {
         </h1>
         <div className="flex flex-col md:flex-row md:justify-center gap-8 mb-8 items-start w-full">
           <div className="flex flex-col items-center w-full md:w-auto">
-            <div className="flex items-center gap-2">
-              <label htmlFor="course-conditions" className="font-semibold text-white text-sm mr-2">Course conditions</label>
+            <div className="flex items-center" style={{ gap: '24px' }}>
+              <label htmlFor="course-conditions" className="font-semibold text-white text-sm">Course conditions:</label>
               <select
                 id="course-conditions"
-                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 ml-3"
+                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
                 value={courseCondition}
                 onChange={e => setCourseCondition(e.target.value)}
               >
@@ -148,8 +148,8 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className={`ml-4 text-xs font-semibold ${carryLabelColor}`}>{carryLabel}</div>
-              <div className="relative ml-2">
+              <div className={`text-xs font-semibold ${carryLabelColor}`}>{carryLabel}</div>
+              <div className="relative">
                 <button
                   type="button"
                   aria-label="Course conditions info"
@@ -166,8 +166,8 @@ function App() {
             </div>
           </div>
           <div className="flex flex-col items-center w-full md:w-auto">
-            <div className="flex items-center gap-2">
-              <label htmlFor="air-conditions" className="font-semibold text-white text-sm">Air conditions</label>
+            <div className="flex items-center" style={{ gap: '24px' }}>
+              <label htmlFor="air-conditions" className="font-semibold text-white text-sm">Air conditions:</label>
               <select
                 id="air-conditions"
                 className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
@@ -178,8 +178,8 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className={`ml-4 text-xs font-semibold ${airLabelColor}`}>{airLabel}</div>
-              <div className="relative ml-2">
+              <div className={`text-xs font-semibold ${airLabelColor}`}>{airLabel}</div>
+              <div className="relative">
                 <button
                   type="button"
                   aria-label="Air conditions info"

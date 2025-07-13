@@ -1,4 +1,5 @@
-import React from 'react';
+
+import { SharedTooltip } from './SharedTooltip';
 
 const COURSE_CONDITION_INFO = [
   { label: 'Normal conditions', desc: 'No adjustment to carry distance.' },
@@ -10,13 +11,13 @@ const COURSE_CONDITION_INFO = [
 
 export function CourseInfoTooltip() {
   return (
-    <div className="custom-tooltip absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-700">
+    <SharedTooltip className="w-128" position="bottom">
       <div className="font-bold mb-2">Course conditions:</div>
       <ul className="list-disc pl-4 space-y-1">
         {COURSE_CONDITION_INFO.map(item => (
           <li key={item.label}><span className="font-semibold">{item.label}:</span> {item.desc}</li>
         ))}
       </ul>
-    </div>
+    </SharedTooltip>
   );
 } 

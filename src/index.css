@@ -53,8 +53,8 @@ body::before {
   fill: #fff !important;
 }
 
-/* Opaque tooltip */
-.recharts-tooltip-wrapper .custom-tooltip {
+/* Shared tooltip styling */
+.custom-tooltip {
   background: #222 !important;
   color: #fff !important;
   opacity: 0.98 !important;
@@ -62,6 +62,11 @@ body::before {
   border: 1px solid #444;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   padding: 1rem;
+}
+
+/* Ensure club label tooltips appear above Recharts elements */
+.recharts-wrapper .custom-tooltip {
+  z-index: 99999 !important;
 }
 
 h1 {

@@ -24,51 +24,92 @@ interface ClubEditModalProps {
 
 export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lineField }: ClubEditModalProps) {
   const [form, setForm] = useState<ClubData>(club || ({} as ClubData));
+  const [showWarn, setShowWarn] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     setForm(club || ({} as ClubData));
+    setDirty(false);
   }, [club]);
 
   if (!club) return null;
 
+  const handleFieldChange = (field: string, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    setDirty(true);
+  };
+
+  const handleClose = () => {
+    if (dirty) {
+      setShowWarn(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowWarn(false);
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} className="fixed z-10 inset-0 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <Dialog.Panel className="relative bg-gray-900 bg-opacity-95 text-white rounded-lg shadow-lg border border-gray-700 w-full max-w-md mx-auto p-6 z-20">
-          <Dialog.Title className="text-lg font-bold mb-4">Edit {club['Club']}</Dialog.Title>
+    <Dialog open={open} onClose={handleClose} className="fixed z-50 inset-0 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 bg-gray-900 bg-opacity-95">
+        <Dialog.Panel className="relative w-full max-w-2xl mx-auto bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 z-20 min-h-[80vh] flex flex-col">
+          <button
+            className="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-2xl font-bold focus:outline-none"
+            onClick={handleClose}
+            aria-label="Close modal"
+          >
+            ×
+          </button>
+          <Dialog.Title className="text-2xl font-bold mb-6 text-center">Edit {club['Club']}</Dialog.Title>
           <form
             onSubmit={e => {
               e.preventDefault();
               onSave(form);
+              setDirty(false);
             }}
-            className="space-y-3"
+            className="space-y-4 flex-1 flex flex-col justify-center"
           >
             {[...distanceFields, lineField, 'Max Flat Carry (Yards)', 'Max Total Distance Hit (Yards)'].map(field => (
               <div key={field}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">{field}</label>
+                <label className="block text-sm font-medium text-gray-200 mb-1">{field}</label>
                 <input
                   type="number"
-                  className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-white shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
                   value={form[field] || ''}
-                  onChange={e => setForm({ ...form, [field]: e.target.value })}
+                  onChange={e => handleFieldChange(field, e.target.value)}
                 />
               </div>
             ))}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">Comments</label>
+              <label className="block text-sm font-medium text-gray-200 mb-1">Comments</label>
               <input
                 type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 dark:bg-gray-700 dark:text-white shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
                 value={form['Comments'] || ''}
-                onChange={e => setForm({ ...form, ['Comments']: e.target.value })}
+                onChange={e => handleFieldChange('Comments', e.target.value)}
               />
             </div>
-            <div className="flex justify-end gap-2 mt-4">
-              <button type="button" onClick={onClose} className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200">Cancel</button>
-              <button type="submit" className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
+            <div className="flex justify-end gap-2 mt-8">
+              <button type="button" onClick={handleClose} className="px-5 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600">Close</button>
+              <button type="submit" className="px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
             </div>
           </form>
         </Dialog.Panel>
+        {showWarn && (
+          <div className="fixed inset-0 flex items-center justify-center z-60 bg-black/60">
+            <div className="bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 max-w-sm w-full">
+              <div className="font-bold text-lg mb-4">Unsaved changes</div>
+              <div className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</div>
+              <div className="flex justify-end gap-2">
+                <button className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600" onClick={() => setShowWarn(false)}>Cancel</button>
+                <button className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700" onClick={handleConfirmClose}>Discard changes</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Dialog>
   );
