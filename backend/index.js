@@ -23,7 +23,7 @@ const SHEET_NAME = process.env.GOOGLE_SHEET_TAB || 'golfData';
 // Helper to get all club data
 app.get('/api/clubs', async (req, res) => {
   try {
-    const range = `${SHEET_NAME}!A1:H`; // Adjust if more columns
+    const range = `${SHEET_NAME}!A1:K`; // or however many columns you have (K for column 11)
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range,
