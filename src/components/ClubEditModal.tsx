@@ -34,7 +34,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
   return (
     <Dialog open={open} onClose={onClose} className="fixed z-10 inset-0 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4">
-        <Dialog.Panel className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-auto p-6 z-20">
+        <Dialog.Panel className="relative bg-gray-900 bg-opacity-95 text-white rounded-lg shadow-lg border border-gray-700 w-full max-w-md mx-auto p-6 z-20">
           <Dialog.Title className="text-lg font-bold mb-4">Edit {club['Club']}</Dialog.Title>
           <form
             onSubmit={e => {

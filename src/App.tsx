@@ -8,6 +8,8 @@ import type { ClubData } from './components/ClubEditModal';
 import { CustomTooltip } from './components/CustomTooltip';
 import { ClickableYAxisTick } from './components/ClickableYAxisTick';
 import { CustomLegend } from './components/CustomLegend';
+import { CourseInfoTooltip } from './components/CourseInfoTooltip';
+import { AirInfoTooltip } from './components/AirInfoTooltip';
 import './index.css';
 
 const API_URL = 'http://localhost:4000/api/clubs';
@@ -36,51 +38,11 @@ const COURSE_CONDITIONS = [
   { label: 'Very wet conditions', value: 'verywet', factor: 0 },
 ];
 
-const COURSE_CONDITION_INFO = [
-  { label: 'Normal conditions', desc: 'No adjustment to carry distance.' },
-  { label: 'Dry conditions', desc: 'Increase carry by 50%.' },
-  { label: 'Very dry conditions', desc: 'Increase carry by 100%.' },
-  { label: 'Wet conditions', desc: 'Decrease carry by 50%.' },
-  { label: 'Very wet conditions', desc: 'Decrease carry by 100% (carry is 0).' },
-];
-
 const AIR_CONDITIONS = [
   { label: 'Normal conditions', value: 'normal' },
   { label: 'Rainy conditions', value: 'rainy' },
   { label: 'Windy conditions', value: 'windy' },
 ];
-
-const AIR_CONDITION_INFO = [
-  { label: 'Normal conditions', desc: 'No adjustment to values.' },
-  { label: 'Rainy conditions', desc: 'Reduce average flat carry by 10%.' },
-  { label: 'Windy conditions', desc: 'Increase overhit risk by 20%.' },
-];
-
-function InfoTooltip() {
-  return (
-    <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-700">
-      <div className="font-bold mb-2">Course conditions:</div>
-      <ul className="list-disc pl-4 space-y-1">
-        {COURSE_CONDITION_INFO.map(item => (
-          <li key={item.label}><span className="font-semibold">{item.label}:</span> {item.desc}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function AirInfoTooltip() {
-  return (
-    <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-700">
-      <div className="font-bold mb-2">Air conditions:</div>
-      <ul className="list-disc pl-4 space-y-1">
-        {AIR_CONDITION_INFO.map(item => (
-          <li key={item.label}><span className="font-semibold">{item.label}:</span> {item.desc}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 function App() {
   const [clubs, setClubs] = useState<ClubData[]>([]);
@@ -88,8 +50,8 @@ function App() {
   const [editClub, setEditClub] = useState<ClubData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [courseCondition, setCourseCondition] = useState('normal');
-  const [showTooltip, setShowTooltip] = useState(false);
   const [airCondition, setAirCondition] = useState('normal');
+  const [showTooltip, setShowTooltip] = useState(false);
   const [showAirTooltip, setShowAirTooltip] = useState(false);
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -120,13 +82,38 @@ function App() {
   const yAxisTopMargin = 30; // matches chart margin.top
   const yAxisBottomMargin = 30; // matches chart margin.bottom
 
-  // Adjust Carry (Yards) based on course condition
+  // Compute carry factor and label for course conditions
   const carryFactor = COURSE_CONDITIONS.find(c => c.value === courseCondition)?.factor ?? 1;
+  let carryLabel = '';
+  if (carryFactor === 1) carryLabel = 'Carry ±0%';
+  else if (carryFactor > 1) carryLabel = `Carry +${Math.round((carryFactor - 1) * 100)}%`;
+  else carryLabel = `Carry ${Math.round((carryFactor - 1) * 100)}%`;
+  const carryLabelColor = carryFactor > 1 ? 'text-green-500' : carryFactor < 1 ? 'text-red-500' : 'text-gray-400';
+
+  // Compute air condition factor and label
+  let airLabel = '';
+  let airLabelColor = 'text-gray-400';
+  if (airCondition === 'rainy') {
+    airLabel = 'Avg Flat Carry -10%';
+    airLabelColor = 'text-red-500';
+  } else if (airCondition === 'windy') {
+    airLabel = 'Overhit Risk +20%';
+    airLabelColor = 'text-green-500';
+  } else {
+    airLabel = 'No adjustment';
+    airLabelColor = 'text-gray-400';
+  }
+
   // Adjust Average Flat Carry and Overhit Risk based on air condition
   const chartData = clubs.map(club => {
-    const carry = parseFloat(club['Carry (Yards)']) * carryFactor;
-    let avgFlatCarry = parseFloat(club['Average Flat Carry (Yards)']);
-    let overhitRisk = parseFloat(club['Overhit Risk (Yards)']);
+    const carryRaw = parseFloat(club['Carry (Yards)']);
+    const avgFlatCarryRaw = parseFloat(club['Average Flat Carry (Yards)']);
+    const overhitRiskRaw = parseFloat(club['Overhit Risk (Yards)']);
+
+    const carry = (isNaN(carryRaw) ? 0 : carryRaw) * carryFactor;
+    let avgFlatCarry = isNaN(avgFlatCarryRaw) ? 0 : avgFlatCarryRaw;
+    let overhitRisk = isNaN(overhitRiskRaw) ? 0 : overhitRiskRaw;
+
     if (airCondition === 'rainy') {
       avgFlatCarry = avgFlatCarry * 0.9;
     }
@@ -144,13 +131,16 @@ function App() {
   return (
     <div className="min-h-screen p-6">
       <div className="golf-main max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-          <div className="flex items-center gap-4 flex-wrap">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center text-blue-900 dark:text-white">
+          Average Club Distances
+        </h1>
+        <div className="flex flex-col md:flex-row md:justify-center gap-8 mb-8 items-start w-full">
+          <div className="flex flex-col items-center w-full md:w-auto">
             <div className="flex items-center gap-2">
-              <label htmlFor="course-conditions" className="font-semibold text-white text-sm">Course conditions</label>
+              <label htmlFor="course-conditions" className="font-semibold text-white text-sm mr-2">Course conditions</label>
               <select
                 id="course-conditions"
-                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 ml-3"
                 value={courseCondition}
                 onChange={e => setCourseCondition(e.target.value)}
               >
@@ -158,21 +148,24 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+              <div className={`ml-4 text-xs font-semibold ${carryLabelColor}`}>{carryLabel}</div>
               <div className="relative ml-2">
                 <button
                   type="button"
                   aria-label="Course conditions info"
-                  className="text-gray-400 hover:text-blue-400 focus:outline-none"
+                  className="text-white hover:text-blue-400 focus:outline-none"
                   onMouseEnter={() => setShowTooltip(true)}
                   onMouseLeave={() => setShowTooltip(false)}
                   onFocus={() => setShowTooltip(true)}
                   onBlur={() => setShowTooltip(false)}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white fill-white" fill="white" viewBox="0 0 24 24" stroke="white"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
                 </button>
-                {showTooltip && <InfoTooltip />}
+                {showTooltip && <CourseInfoTooltip />}
               </div>
             </div>
+          </div>
+          <div className="flex flex-col items-center w-full md:w-auto">
             <div className="flex items-center gap-2">
               <label htmlFor="air-conditions" className="font-semibold text-white text-sm">Air conditions</label>
               <select
@@ -181,30 +174,28 @@ function App() {
                 value={airCondition}
                 onChange={e => setAirCondition(e.target.value)}
               >
-                {AIR_CONDITIONS.map(opt => (
+                {AIR_CONDITIONS.map((opt: { label: string; value: string }) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+              <div className={`ml-4 text-xs font-semibold ${airLabelColor}`}>{airLabel}</div>
               <div className="relative ml-2">
                 <button
                   type="button"
                   aria-label="Air conditions info"
-                  className="text-gray-400 hover:text-blue-400 focus:outline-none"
+                  className="text-white hover:text-blue-400 focus:outline-none"
                   onMouseEnter={() => setShowAirTooltip(true)}
                   onMouseLeave={() => setShowAirTooltip(false)}
                   onFocus={() => setShowAirTooltip(true)}
                   onBlur={() => setShowAirTooltip(false)}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white fill-white" fill="white" viewBox="0 0 24 24" stroke="white"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
                 </button>
                 {showAirTooltip && <AirInfoTooltip />}
               </div>
             </div>
           </div>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold mb-2 text-center text-blue-900 dark:text-white">
-          Average Club Distances
-        </h1>
         {loading ? (
           <div className="text-center text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
@@ -217,7 +208,12 @@ function App() {
                 margin={{ top: yAxisTopMargin, right: 40, left: 120, bottom: yAxisBottomMargin }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tick={{ fontSize: 12, fill: '#fff' }} domain={[0, 'dataMax + 30']} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 12, fill: '#fff' }}
+                  domain={[0, 'dataMax + 30']}
+                  label={{ value: 'Distance (yards)', position: 'insideBottom', offset: -10, fill: '#fff', fontSize: 14 }}
+                />
                 <YAxis
                   type="category"
                   dataKey="Club"
@@ -226,15 +222,16 @@ function App() {
                   width={80}
                 />
                 <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
-                {DISTANCE_FIELDS.map((field, i) => (
+                {DISTANCE_FIELDS.map((field) => (
                   <Bar
                     key={field}
                     dataKey={field}
                     stackId="a"
                     fill={BAR_COLORS[field]}
                     barSize={22}
-                    radius={i === 0 ? [10, 10, 10, 10] : 0}
-                    isAnimationActive={false}
+                    radius={0}
+                    isAnimationActive={true}
+                    animationDuration={600}
                   >
                     <LabelList
                       dataKey={field}
@@ -251,7 +248,8 @@ function App() {
                   strokeWidth={3}
                   dot={{ r: 5, fill: LINE_COLOR, stroke: '#fff', strokeWidth: 2 }}
                   activeDot={{ r: 7 }}
-                  isAnimationActive={false}
+                  isAnimationActive={true}
+                  animationDuration={600}
                   label={{ position: 'top', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
                 />
               </BarChart>
