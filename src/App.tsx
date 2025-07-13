@@ -11,6 +11,7 @@ import { ClickableYAxisTick } from './components/ClickableYAxisTick';
 import { CustomLegend } from './components/CustomLegend';
 import { CourseInfoTooltip } from './components/CourseInfoTooltip';
 import { AirInfoTooltip } from './components/AirInfoTooltip';
+import { ApiDebugger } from './components/ApiDebugger';
 import './index.css';
 
 // Use Netlify function URL in production, localhost in development
@@ -299,6 +300,7 @@ function App() {
           distanceFields={DISTANCE_FIELDS as unknown as string[]}
           lineField={LINE_FIELD}
         />
+        <ApiDebugger />
       </div>
     </div>
   );
