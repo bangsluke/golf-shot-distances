@@ -50,7 +50,6 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit }: ClickableYA
               pointerEvents: 'auto',
             }}
             onClick={() => {
-              console.log('Clicked label:', clubName, club);
               if (club) onEdit(club);
             }}
             onMouseEnter={() => setHovered(true)}

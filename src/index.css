@@ -79,6 +79,21 @@ body::before {
   z-index: 999999 !important;
 }
 
+/* Additional modal visibility fixes */
+[style*="z-index: 999999"] {
+  z-index: 999999 !important;
+}
+
+/* Ensure modal backdrop is visible */
+.bg-black.bg-opacity-75 {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+/* Force modal content to be visible */
+.bg-gray-900 {
+  background-color: #111827 !important;
+}
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;

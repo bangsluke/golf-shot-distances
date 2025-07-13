@@ -3,6 +3,7 @@ import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
 } from 'recharts';
+import { HiInformationCircle } from 'react-icons/hi';
 import { ClubEditModal } from './components/ClubEditModal';
 import type { ClubData } from './components/ClubEditModal';
 import { CustomTooltip } from './components/CustomTooltip';
@@ -69,17 +70,9 @@ function App() {
     fetchClubs();
   }, []);
 
-  // Debug modal state changes
-  useEffect(() => {
-    console.log('Modal state changed - modalOpen:', modalOpen, 'editClub:', editClub);
-  }, [modalOpen, editClub]);
-
   const handleEdit = (club: ClubData) => {
-    console.log('handleEdit called with club:', club);
-    console.log('Setting editClub and modalOpen to true');
     setEditClub(club);
     setModalOpen(true);
-    console.log('Current modalOpen state should be true');
   };
 
   const handleSave = async (updated: ClubData) => {
@@ -175,7 +168,7 @@ function App() {
                   onFocus={() => setShowTooltip(true)}
                   onBlur={() => setShowTooltip(false)}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white fill-white" fill="white" viewBox="0 0 24 24" stroke="white"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
+                  <HiInformationCircle className="h-5 w-5" />
                 </button>
                 {showTooltip && <CourseInfoTooltip />}
               </div>
@@ -205,7 +198,7 @@ function App() {
                   onFocus={() => setShowAirTooltip(true)}
                   onBlur={() => setShowAirTooltip(false)}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white fill-white" fill="white" viewBox="0 0 24 24" stroke="white"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
+                  <HiInformationCircle className="h-5 w-5" />
                 </button>
                 {showAirTooltip && <AirInfoTooltip />}
               </div>
