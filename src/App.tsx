@@ -125,15 +125,13 @@ function App() {
       overhitRisk = overhitRisk * 1.2;
     }
 
-    // Calculate adjusted Average Total Distance Hit based on the formula: Average Total Distance Hit = Average Flat Carry + Carry
-    const adjustedAvgTotalDistance = avgFlatCarry + carry;
-
+    // Use the value from the sheet for Average Total Distance Hit (Yards)
     return {
       ...club,
       'Carry (Yards)': carry.toFixed(0),
       'Average Flat Carry (Yards)': avgFlatCarry.toFixed(0),
       'Overhit Risk (Yards)': overhitRisk.toFixed(0),
-      'Average Total Distance Hit (Yards)': adjustedAvgTotalDistance.toFixed(0),
+      'Average Total Distance Hit (Yards)': club['Average Total Distance Hit (Yards)'],
     };
   });
 

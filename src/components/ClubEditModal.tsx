@@ -9,6 +9,9 @@ export interface ClubData {
   'Average Total Distance Hit (Yards)': string;
   'Max Flat Carry (Yards)': string;
   'Max Total Distance Hit (Yards)': string;
+  'Make': string;
+  'Model': string;
+  'LastUpdated': string;
   Comments: string;
   [key: string]: string;
 }
@@ -33,7 +36,25 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
   }, [club]);
 
   const handleFieldChange = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    const newForm = { ...form, [field]: value };
+    
+    // Calculate Carry: Average Total Distance Hit - Average Flat Carry
+    if (field === 'Average Total Distance Hit (Yards)' || field === 'Average Flat Carry (Yards)') {
+      const avgTotalDistance = parseFloat(newForm['Average Total Distance Hit (Yards)'] || '0');
+      const avgFlatCarry = parseFloat(newForm['Average Flat Carry (Yards)'] || '0');
+      const carry = avgTotalDistance - avgFlatCarry;
+      newForm['Carry (Yards)'] = carry.toFixed(0);
+    }
+    
+    // Calculate Overhit Risk: Max Total Distance Hit - Average Total Distance Hit
+    if (field === 'Max Total Distance Hit (Yards)' || field === 'Average Total Distance Hit (Yards)') {
+      const maxTotalDistance = parseFloat(newForm['Max Total Distance Hit (Yards)'] || '0');
+      const avgTotalDistance = parseFloat(newForm['Average Total Distance Hit (Yards)'] || '0');
+      const overhitRisk = maxTotalDistance - avgTotalDistance;
+      newForm['Overhit Risk (Yards)'] = overhitRisk.toFixed(0);
+    }
+    
+    setForm(newForm);
     setDirty(true);
   };
 
@@ -126,30 +147,110 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
           <form
             onSubmit={e => {
               e.preventDefault();
-              onSave(form);
+              // Auto-populate LastUpdated with current date and time
+              const now = new Date();
+              const formattedDateTime = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              });
+              const formWithTimestamp = { ...form, 'LastUpdated': formattedDateTime };
+              onSave(formWithTimestamp);
               setDirty(false);
             }}
             className="space-y-4"
           >
-            {[...distanceFields, lineField, 'Max Flat Carry (Yards)', 'Max Total Distance Hit (Yards)'].map(field => (
-              <div key={field}>
-                <label className="block text-sm font-medium text-gray-200 mb-1">{field}</label>
-                <input
-                  type="number"
-                  className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                  value={form[field] || ''}
-                  onChange={e => handleFieldChange(field, e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '0.375rem',
-                    border: '1px solid #374151',
-                    backgroundColor: '#1f2937',
-                    color: 'white'
-                  }}
-                />
-              </div>
-            ))}
+            {[...distanceFields, lineField, 'Max Flat Carry (Yards)', 'Max Total Distance Hit (Yards)'].map(field => {
+              const isReadOnly = field === 'Carry (Yards)' || field === 'Overhit Risk (Yards)';
+              return (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-200 mb-1">
+                    {field}
+                    {isReadOnly && <span className="text-xs text-gray-400 ml-2">(Calculated)</span>}
+                  </label>
+                  <input
+                    type="number"
+                    className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                    value={form[field] || ''}
+                    onChange={e => handleFieldChange(field, e.target.value)}
+                    readOnly={isReadOnly}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.375rem',
+                      border: '1px solid #374151',
+                      backgroundColor: isReadOnly ? '#374151' : '#1f2937',
+                      color: isReadOnly ? '#9ca3af' : 'white',
+                      cursor: isReadOnly ? 'not-allowed' : 'text'
+                    }}
+                  />
+                </div>
+              );
+            })}
+            
+            {/* Make and Model fields */}
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-1">Make</label>
+              <input
+                type="text"
+                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                value={form['Make'] || ''}
+                onChange={e => handleFieldChange('Make', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid #374151',
+                  backgroundColor: '#1f2937',
+                  color: 'white'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-1">Model</label>
+              <input
+                type="text"
+                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                value={form['Model'] || ''}
+                onChange={e => handleFieldChange('Model', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid #374151',
+                  backgroundColor: '#1f2937',
+                  color: 'white'
+                }}
+              />
+            </div>
+            
+            {/* LastUpdated field - read-only */}
+            <div>
+              <label className="block text-sm font-medium text-gray-200 mb-1">
+                LastUpdated
+                <span className="text-xs text-gray-400 ml-2">(Auto-generated)</span>
+              </label>
+              <input
+                type="text"
+                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                value={form['LastUpdated'] || 'Will be set on save'}
+                readOnly
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid #374151',
+                  backgroundColor: '#374151',
+                  color: '#9ca3af',
+                  cursor: 'not-allowed'
+                }}
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-200 mb-1">Comments</label>
               <input
