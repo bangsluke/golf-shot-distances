@@ -1,4 +1,3 @@
-import { Dialog } from '@headlessui/react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -28,16 +27,10 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
   const [showWarn, setShowWarn] = useState(false);
   const [dirty, setDirty] = useState(false);
 
-  console.log('ClubEditModal render - open:', open, 'club:', club);
-
   useEffect(() => {
-    console.log('ClubEditModal useEffect - club changed:', club);
     setForm(club || ({} as ClubData));
     setDirty(false);
   }, [club]);
-
-  // Remove the early return that prevents rendering when club is null
-  // if (!club) return null;
 
   const handleFieldChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -59,31 +52,84 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
 
   // Only render the modal content if we have a club and modal is open
   if (!club || !open) {
-    console.log('ClubEditModal not rendering - club:', club, 'open:', open);
     return null;
   }
 
-  console.log('ClubEditModal rendering modal content');
-
+  // Simplified modal content with higher z-index and simpler structure
   const modalContent = (
-    <Dialog open={open} onClose={handleClose} className="fixed z-[999999] inset-0 overflow-y-auto">
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4" style={{ zIndex: 999999 }}>
-        <Dialog.Panel className="relative w-full max-w-2xl mx-auto bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 z-[999999] min-h-[80vh] flex flex-col" style={{ zIndex: 999999 }}>
+    <div 
+      className="fixed inset-0 z-[999999] overflow-y-auto"
+      style={{ 
+        zIndex: 999999,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      }}
+    >
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-75"
+        style={{ 
+          zIndex: 999999,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)'
+        }}
+        onClick={handleClose}
+      />
+      
+      {/* Modal */}
+      <div 
+        className="flex items-center justify-center min-h-screen p-4"
+        style={{ zIndex: 999999 }}
+      >
+        <div 
+          className="relative w-full max-w-2xl mx-auto bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8"
+          style={{ 
+            zIndex: 999999,
+            position: 'relative',
+            backgroundColor: '#111827',
+            color: 'white',
+            borderRadius: '0.5rem',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+            border: '1px solid #374151',
+            padding: '2rem'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             className="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-2xl font-bold focus:outline-none"
             onClick={handleClose}
             aria-label="Close modal"
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              color: '#9ca3af',
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
           >
             ×
           </button>
-          <Dialog.Title className="text-2xl font-bold mb-6 text-center">Edit {club['Club']}</Dialog.Title>
+          
+          <h2 className="text-2xl font-bold mb-6 text-center">Edit {club['Club']}</h2>
+          
           <form
             onSubmit={e => {
               e.preventDefault();
               onSave(form);
               setDirty(false);
             }}
-            className="space-y-4 flex-1 flex flex-col justify-center"
+            className="space-y-4"
           >
             {[...distanceFields, lineField, 'Max Flat Carry (Yards)', 'Max Total Distance Hit (Yards)'].map(field => (
               <div key={field}>
@@ -93,6 +139,14 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
                   className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
                   value={form[field] || ''}
                   onChange={e => handleFieldChange(field, e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid #374151',
+                    backgroundColor: '#1f2937',
+                    color: 'white'
+                  }}
                 />
               </div>
             ))}
@@ -103,28 +157,117 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
                 className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
                 value={form['Comments'] || ''}
                 onChange={e => handleFieldChange('Comments', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '0.375rem',
+                  border: '1px solid #374151',
+                  backgroundColor: '#1f2937',
+                  color: 'white'
+                }}
               />
             </div>
             <div className="flex justify-end gap-2 mt-8">
-              <button type="button" onClick={handleClose} className="px-5 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600">Close</button>
-              <button type="submit" className="px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Save</button>
+              <button 
+                type="button" 
+                onClick={handleClose} 
+                className="px-5 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600"
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: '#374151',
+                  color: '#d1d5db',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+              <button 
+                type="submit" 
+                className="px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Save
+              </button>
             </div>
           </form>
-        </Dialog.Panel>
-        {showWarn && (
-          <div className="fixed inset-0 flex items-center justify-center z-[999999] bg-black/60" style={{ zIndex: 999999 }}>
-            <div className="bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 max-w-sm w-full">
-              <div className="font-bold text-lg mb-4">Unsaved changes</div>
-              <div className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</div>
-              <div className="flex justify-end gap-2">
-                <button className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600" onClick={() => setShowWarn(false)}>Cancel</button>
-                <button className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700" onClick={handleConfirmClose}>Discard changes</button>
-              </div>
+        </div>
+      </div>
+      
+      {/* Warning dialog */}
+      {showWarn && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-[999999] bg-black/60"
+          style={{ 
+            zIndex: 999999,
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)'
+          }}
+        >
+          <div 
+            className="bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 max-w-sm w-full"
+            style={{
+              backgroundColor: '#111827',
+              color: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+              border: '1px solid #374151',
+              padding: '2rem',
+              maxWidth: '24rem',
+              width: '100%'
+            }}
+          >
+            <div className="font-bold text-lg mb-4">Unsaved changes</div>
+            <div className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</div>
+            <div className="flex justify-end gap-2">
+              <button 
+                className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600" 
+                onClick={() => setShowWarn(false)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: '#374151',
+                  color: '#d1d5db',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700" 
+                onClick={handleConfirmClose}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Discard changes
+              </button>
             </div>
           </div>
-        )}
-      </div>
-    </Dialog>
+        </div>
+      )}
+    </div>
   );
 
   // Use portal to render modal directly in document body

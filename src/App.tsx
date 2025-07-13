@@ -69,17 +69,9 @@ function App() {
     fetchClubs();
   }, []);
 
-  // Debug modal state changes
-  useEffect(() => {
-    console.log('Modal state changed - modalOpen:', modalOpen, 'editClub:', editClub);
-  }, [modalOpen, editClub]);
-
   const handleEdit = (club: ClubData) => {
-    console.log('handleEdit called with club:', club);
-    console.log('Setting editClub and modalOpen to true');
     setEditClub(club);
     setModalOpen(true);
-    console.log('Current modalOpen state should be true');
   };
 
   const handleSave = async (updated: ClubData) => {
