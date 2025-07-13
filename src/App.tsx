@@ -61,9 +61,17 @@ function App() {
 
   const fetchClubs = async () => {
     setLoading(true);
-    const res = await axios.get(API_URL);
-    setClubs(res.data);
-    setLoading(false);
+    try {
+      const res = await axios.get(API_URL);
+      setClubs(res.data);
+    } catch (error) {
+      console.error('Failed to fetch clubs:', error);
+      // Set empty array to prevent crashes, but you might want to show an error message
+      setClubs([]);
+      // You could add a state for error handling here
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -76,10 +84,16 @@ function App() {
   };
 
   const handleSave = async (updated: ClubData) => {
-    await axios.put(`${API_URL}/${encodeURIComponent(updated['Club'])}`, updated);
-    setModalOpen(false);
-    setEditClub(null);
-    fetchClubs();
+    try {
+      await axios.put(`${API_URL}/${encodeURIComponent(updated['Club'])}`, updated);
+      setModalOpen(false);
+      setEditClub(null);
+      fetchClubs();
+    } catch (error) {
+      console.error('Failed to update club:', error);
+      // You could add error handling here (show error message to user)
+      // For now, we'll just log the error
+    }
   };
 
   const chartHeight = 500;
@@ -110,29 +124,41 @@ function App() {
 
   // Adjust Average Flat Carry and Overhit Risk based on air condition
   const chartData = clubs.map(club => {
-    const carryRaw = parseFloat(club['Carry (Yards)']);
-    const avgFlatCarryRaw = parseFloat(club['Average Flat Carry (Yards)']);
-    const overhitRiskRaw = parseFloat(club['Overhit Risk (Yards)']);
+    try {
+      const carryRaw = parseFloat(club['Carry (Yards)']);
+      const avgFlatCarryRaw = parseFloat(club['Average Flat Carry (Yards)']);
+      const overhitRiskRaw = parseFloat(club['Overhit Risk (Yards)']);
 
-    const carry = (isNaN(carryRaw) ? 0 : carryRaw) * carryFactor;
-    let avgFlatCarry = isNaN(avgFlatCarryRaw) ? 0 : avgFlatCarryRaw;
-    let overhitRisk = isNaN(overhitRiskRaw) ? 0 : overhitRiskRaw;
+      const carry = (isNaN(carryRaw) ? 0 : carryRaw) * carryFactor;
+      let avgFlatCarry = isNaN(avgFlatCarryRaw) ? 0 : avgFlatCarryRaw;
+      let overhitRisk = isNaN(overhitRiskRaw) ? 0 : overhitRiskRaw;
 
-    if (airCondition === 'rainy') {
-      avgFlatCarry = avgFlatCarry * 0.9;
+      if (airCondition === 'rainy') {
+        avgFlatCarry = avgFlatCarry * 0.9;
+      }
+      if (airCondition === 'windy') {
+        overhitRisk = overhitRisk * 1.2;
+      }
+
+      // Use the value from the sheet for Average Total Distance Hit (Yards)
+      return {
+        ...club,
+        'Carry (Yards)': carry.toFixed(0),
+        'Average Flat Carry (Yards)': avgFlatCarry.toFixed(0),
+        'Overhit Risk (Yards)': overhitRisk.toFixed(0),
+        'Average Total Distance Hit (Yards)': club['Average Total Distance Hit (Yards)'],
+      };
+    } catch (error) {
+      console.error('Error processing club data:', club, error);
+      // Return a safe fallback
+      return {
+        ...club,
+        'Carry (Yards)': '0',
+        'Average Flat Carry (Yards)': '0',
+        'Overhit Risk (Yards)': '0',
+        'Average Total Distance Hit (Yards)': '0',
+      };
     }
-    if (airCondition === 'windy') {
-      overhitRisk = overhitRisk * 1.2;
-    }
-
-    // Use the value from the sheet for Average Total Distance Hit (Yards)
-    return {
-      ...club,
-      'Carry (Yards)': carry.toFixed(0),
-      'Average Flat Carry (Yards)': avgFlatCarry.toFixed(0),
-      'Overhit Risk (Yards)': overhitRisk.toFixed(0),
-      'Average Total Distance Hit (Yards)': club['Average Total Distance Hit (Yards)'],
-    };
   });
 
   return (
