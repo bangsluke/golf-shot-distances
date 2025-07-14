@@ -22,13 +22,21 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const path = event.path.replace('/.netlify/functions/api-simple', '');
-    console.log('Request path:', event.path);
+    console.log('Original event.path:', event.path);
+    console.log('Looking for pattern: /.netlify/functions/api-simple');
+    
+    let path = event.path;
+    if (event.path.includes('/.netlify/functions/api-simple')) {
+      path = event.path.replace('/.netlify/functions/api-simple', '');
+    } else if (event.path.includes('/api-simple')) {
+      path = event.path.replace('/api-simple', '');
+    }
+    
     console.log('Processed path:', path);
     console.log('HTTP method:', event.httpMethod);
     
     // GET /api-simple/clubs - Return mock data
-    if (event.httpMethod === 'GET' && (path === '/clubs' || path === '/clubs/')) {
+    if (event.httpMethod === 'GET' && (path === '/clubs' || path === '/clubs/' || path.includes('clubs'))) {
       const mockClubs = [
         {
           'Club': 'Driver',
