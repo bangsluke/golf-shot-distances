@@ -38,9 +38,9 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
     <>
       <g transform={`translate(${x},${y})`}>
         <foreignObject 
-          x={isMobile ? -60 : -120} 
+          x={isMobile ? -90 : -120} 
           y={-14} 
-          width={isMobile ? 60 : 120} 
+          width={isMobile ? 90 : 120} 
           height={28} 
           style={{ overflow: 'visible' }}
         >
@@ -54,8 +54,8 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
               borderBottom: '1px dotted #9ca3af',
               cursor: 'pointer',
               position: 'relative',
-              fontSize: isHighlighted ? (isMobile ? 12 : 16) : (isMobile ? 10 : 14),
-              lineHeight: '28px',
+              fontSize: isHighlighted ? (isMobile ? 13 : 16) : (isMobile ? 11 : 14),
+              lineHeight: isMobile ? '22px' : '28px',
               width: '100%',
               pointerEvents: 'auto',
               backgroundColor: isHighlighted ? 'rgba(255, 255, 0, 0.2)' : 'transparent',
