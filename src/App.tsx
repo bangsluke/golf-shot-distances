@@ -382,6 +382,17 @@ function App() {
               placeholder="0"
               min="0"
             />
+            <button
+              onClick={() => {
+                setDistanceToHole('');
+                setRecommendedClub(null);
+                setHighlightedClub(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+              title="Clear distance and highlighting"
+            >
+              Clear
+            </button>
           </div>
           
           {recommendedClub && (
