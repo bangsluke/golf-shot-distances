@@ -11,7 +11,7 @@ import { ClickableYAxisTick } from './components/ClickableYAxisTick';
 import { CustomLegend } from './components/CustomLegend';
 import { CourseInfoTooltip } from './components/CourseInfoTooltip';
 import { AirInfoTooltip } from './components/AirInfoTooltip';
-import { ApiDebugger } from './components/ApiDebugger';
+
 import './index.css';
 
 // Use Netlify function URL in production, localhost in development
@@ -52,6 +52,7 @@ const AIR_CONDITIONS = [
 function App() {
   const [clubs, setClubs] = useState<ClubData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reordering, setReordering] = useState(false);
   const [editClub, setEditClub] = useState<ClubData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [courseCondition, setCourseCondition] = useState('normal');
@@ -72,6 +73,12 @@ function App() {
     try {
       const res = await axios.get(API_URL);
       setClubs(res.data);
+      
+      // Check if any clubs need reordering
+      const needsReordering = res.data.some((club: ClubData) => !club['ClubOrder'] || isNaN(parseInt(club['ClubOrder'])));
+      if (needsReordering) {
+        await reorderClubs();
+      }
     } catch (error) {
       console.error('Failed to fetch clubs:', error);
       // Set empty array to prevent crashes, but you might want to show an error message
@@ -95,18 +102,137 @@ function App() {
 
   const handleSave = async (updated: ClubData) => {
     try {
-      await axios.put(`${API_URL}/${encodeURIComponent(updated['Club'])}`, updated);
+      // If ClubOrder is missing or invalid, assign a default value
+      if (!updated['ClubOrder'] || isNaN(parseInt(updated['ClubOrder']))) {
+        const maxOrder = Math.max(...clubs.map(club => parseInt(club['ClubOrder'] || '0') || 0));
+        updated['ClubOrder'] = (maxOrder + 1).toString();
+      }
+      
+      // Check if this is a new club creation by checking if the original club was "New Club"
+      // or if the club name starts with "New" (indicating it's still being created)
+      const isNewClub = !editClub || 
+                       editClub['Club'] === 'New Club' || 
+                       editClub['Club'].startsWith('New') ||
+                       updated['Club'].startsWith('New');
+      
+      if (isNewClub) {
+        // Create new club
+        await axios.post(API_URL, updated);
+      } else {
+        // Update existing club
+        await axios.put(`${API_URL}/${encodeURIComponent(updated['Club'])}`, updated);
+      }
+      
       setModalOpen(false);
       setEditClub(null);
       fetchClubs();
     } catch (error) {
-      console.error('Failed to update club:', error);
-      // You could add error handling here (show error message to user)
-      // For now, we'll just log the error
+      console.error('Failed to save club:', error);
+      // Re-throw the error so the modal can catch and display it
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || error.message || 'Failed to save club data');
+      } else {
+        throw new Error('Failed to save club data');
+      }
     }
   };
 
-  const chartHeight = 500; // Back to original height
+  const handleDelete = async (club: ClubData) => {
+    const clubName = club['Club']?.trim();
+    
+    try {
+      console.log('handleDelete called with club:', club);
+      console.log('Club name after trim:', `"${clubName}"`);
+      
+      if (!clubName || clubName === '' || clubName === 'New Club') {
+        console.log('Validation failed: invalid club name');
+        throw new Error('Cannot delete a club with an invalid or default name. Please rename the club first.');
+      }
+      
+      // Check if the club actually exists in our current data
+      const existingClub = clubs.find(c => c['Club'] === clubName);
+      console.log('Existing club found:', existingClub);
+      
+      if (!existingClub) {
+        console.log('Validation failed: club not found in current data');
+        throw new Error(`Club "${clubName}" not found. It may have already been deleted or renamed.`);
+      }
+      
+      console.log('Proceeding with delete for club:', clubName);
+      await axios.delete(`${API_URL}/${encodeURIComponent(clubName)}`);
+      setModalOpen(false);
+      setEditClub(null);
+      fetchClubs();
+    } catch (error) {
+      console.error('Failed to delete club:', error);
+      // Re-throw the error so the modal can catch and display it
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          throw new Error(`Club "${clubName}" not found in the database. It may have already been deleted or never saved.`);
+        } else {
+          throw new Error(error.response?.data?.message || error.message || 'Failed to delete club');
+        }
+      } else {
+        throw new Error(error instanceof Error ? error.message : 'Failed to delete club');
+      }
+    }
+  };
+
+  const handleAdd = () => {
+    const maxOrder = Math.max(...clubs.map(club => parseInt(club['ClubOrder'] || '0') || 0));
+    const newClub: ClubData = {
+      Club: 'New Club',
+      'Average Flat Carry (Yards)': '',
+      'Average Roll (Yards)': '',
+      'Overhit Risk (Yards)': '',
+      'Average Total Distance Hit (Yards)': '',
+      'Max Flat Carry (Yards)': '',
+      'Max Total Distance Hit (Yards)': '',
+      'Make': '',
+      'Model': '',
+      'LastUpdated': '',
+      'ClubOrder': (maxOrder + 1).toString(),
+      Comments: ''
+    };
+    setEditClub(newClub);
+    setModalOpen(true);
+  };
+
+  // Function to reorder clubs when ClubOrder values are missing
+  const reorderClubs = async () => {
+    setReordering(true);
+    try {
+      const clubsToUpdate = clubs.filter(club => !club['ClubOrder'] || isNaN(parseInt(club['ClubOrder'])));
+      
+      if (clubsToUpdate.length === 0) {
+        return; // No clubs need reordering
+      }
+
+      // Get the current max order
+      const maxOrder = Math.max(...clubs.map(club => parseInt(club['ClubOrder'] || '0') || 0));
+      
+      // Update clubs with missing ClubOrder values
+      const updatePromises = clubsToUpdate.map((club, index) => {
+        const updatedClub = { ...club, 'ClubOrder': (maxOrder + index + 1).toString() };
+        return axios.put(`${API_URL}/${encodeURIComponent(club['Club'])}`, updatedClub);
+      });
+
+      await Promise.all(updatePromises);
+      fetchClubs(); // Refresh the data
+    } catch (error) {
+      console.error('Failed to reorder clubs:', error);
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  // Calculate dynamic chart height based on number of clubs
+  // Base height of 500px for 13 clubs, adjust proportionally
+  const baseHeight = 500;
+  const baseClubCount = 13;
+  const currentClubCount = clubs.length;
+  const chartHeight = Math.max(300, Math.min(800, baseHeight * (currentClubCount / baseClubCount)));
+  
   const yAxisTopMargin = 30; // matches chart margin.top
   const yAxisBottomMargin = 30; // matches chart margin.bottom
 
@@ -133,62 +259,69 @@ function App() {
   }
 
   // Calculate Carry and Overhit Risk, then adjust based on conditions
-  const chartData = clubs.map(club => {
-    try {
-      // Parse values, handling empty strings
-      const avgTotalDistanceStr = club['Average Total Distance Hit (Yards)'] || '';
-      const avgFlatCarryStr = club['Average Flat Carry (Yards)'] || '';
-      const maxTotalDistanceStr = club['Max Total Distance Hit (Yards)'] || '';
-      
-      const avgTotalDistance = avgTotalDistanceStr ? parseFloat(avgTotalDistanceStr) : 0;
-      const avgFlatCarryRaw = avgFlatCarryStr ? parseFloat(avgFlatCarryStr) : 0;
-      const maxTotalDistance = maxTotalDistanceStr ? parseFloat(maxTotalDistanceStr) : 0;
-      
-      // Only calculate if we have valid data
-      let averageRoll = 0;
-      let overhitRisk = 0;
-      let avgFlatCarry = avgFlatCarryRaw;
-      
-      if (avgTotalDistance > 0 && avgFlatCarryRaw > 0) {
-        averageRoll = (avgTotalDistance - avgFlatCarryRaw) * rollFactor;
-      }
-      
-      if (maxTotalDistance > 0 && avgTotalDistance > 0) {
-        overhitRisk = maxTotalDistance - avgTotalDistance;
-      }
+  const chartData = clubs
+    .map(club => {
+      try {
+        // Parse values, handling empty strings
+        const avgTotalDistanceStr = club['Average Total Distance Hit (Yards)'] || '';
+        const avgFlatCarryStr = club['Average Flat Carry (Yards)'] || '';
+        const maxTotalDistanceStr = club['Max Total Distance Hit (Yards)'] || '';
+        
+        const avgTotalDistance = avgTotalDistanceStr ? parseFloat(avgTotalDistanceStr) : 0;
+        const avgFlatCarryRaw = avgFlatCarryStr ? parseFloat(avgFlatCarryStr) : 0;
+        const maxTotalDistance = maxTotalDistanceStr ? parseFloat(maxTotalDistanceStr) : 0;
+        
+        // Only calculate if we have valid data
+        let averageRoll = 0;
+        let overhitRisk = 0;
+        let avgFlatCarry = avgFlatCarryRaw;
+        
+        if (avgTotalDistance > 0 && avgFlatCarryRaw > 0) {
+          averageRoll = (avgTotalDistance - avgFlatCarryRaw) * rollFactor;
+        }
+        
+        if (maxTotalDistance > 0 && avgTotalDistance > 0) {
+          overhitRisk = maxTotalDistance - avgTotalDistance;
+        }
 
-      // Apply air condition adjustments
-      if (airCondition === 'rainy' && avgFlatCarry > 0) {
-        avgFlatCarry = avgFlatCarry * 0.9;
-      }
-      if (airCondition === 'windy' && overhitRisk > 0) {
-        overhitRisk = overhitRisk * 1.2;
-      }
+        // Apply air condition adjustments
+        if (airCondition === 'rainy' && avgFlatCarry > 0) {
+          avgFlatCarry = avgFlatCarry * 0.9;
+        }
+        if (airCondition === 'windy' && overhitRisk > 0) {
+          overhitRisk = overhitRisk * 1.2;
+        }
 
-      // Recalculate total distance based on adjusted flat carry and roll
-      const adjustedTotalDistance = avgFlatCarry + averageRoll;
+        // Recalculate total distance based on adjusted flat carry and roll
+        const adjustedTotalDistance = avgFlatCarry + averageRoll;
 
-      return {
-        ...club,
-        'Average Roll (Yards)': Math.round(averageRoll),
-        'Average Flat Carry (Yards)': Math.round(avgFlatCarry),
-        'Overhit Risk (Yards)': Math.round(overhitRisk),
-        'Average Total Distance Hit (Yards)': Math.round(adjustedTotalDistance),
-        isHighlighted: highlightedClub === club['Club'],
-      };
-    } catch (error) {
-      console.error('Error processing club data:', club, error);
-      // Return a safe fallback
-      return {
-        ...club,
-        'Average Roll (Yards)': 0,
-        'Average Flat Carry (Yards)': 0,
-        'Overhit Risk (Yards)': 0,
-        'Average Total Distance Hit (Yards)': 0,
-        isHighlighted: false,
-      };
-    }
-  });
+        return {
+          ...club,
+          'Average Roll (Yards)': Math.round(averageRoll),
+          'Average Flat Carry (Yards)': Math.round(avgFlatCarry),
+          'Overhit Risk (Yards)': Math.round(overhitRisk),
+          'Average Total Distance Hit (Yards)': Math.round(adjustedTotalDistance),
+          isHighlighted: highlightedClub === club['Club'],
+        };
+      } catch (error) {
+        console.error('Error processing club data:', club, error);
+        // Return a safe fallback
+        return {
+          ...club,
+          'Average Roll (Yards)': 0,
+          'Average Flat Carry (Yards)': 0,
+          'Overhit Risk (Yards)': 0,
+          'Average Total Distance Hit (Yards)': 0,
+          isHighlighted: false,
+        };
+      }
+    })
+    .sort((a, b) => {
+      // Sort by ClubOrder if available, otherwise maintain original order
+      const orderA = parseInt(a['ClubOrder'] || '999999') || 999999;
+      const orderB = parseInt(b['ClubOrder'] || '999999') || 999999;
+      return orderA - orderB;
+    });
 
 
 
@@ -413,7 +546,7 @@ function App() {
         {loading ? (
           <div className="text-center text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
-          <div className="relative bg-gray-800 rounded-lg shadow-lg p-1 sm:p-2 md:p-6 w-full" ref={chartRef}>
+          <div className="relative bg-gray-800 rounded-lg p-1 sm:p-2 md:p-6 w-full" ref={chartRef}>
             <CustomLegend />
             <ResponsiveContainer width="100%" height={chartHeight}>
               <ComposedChart
@@ -506,15 +639,39 @@ function App() {
             </ResponsiveContainer>
           </div>
         )}
+        
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+          <button
+            onClick={reorderClubs}
+            className={`text-white px-3 sm:px-4 py-1 sm:py-2 rounded text-xs sm:text-sm font-medium transition-colors ${
+              loading || reordering 
+                ? 'bg-gray-600 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
+            title="Reorder clubs by assigning ClubOrder values"
+            disabled={loading || reordering}
+          >
+            {loading || reordering ? 'Reordering...' : 'Reorder Clubs'}
+          </button>
+          <button
+            onClick={handleAdd}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-1 sm:py-2 rounded text-xs sm:text-sm font-medium transition-colors"
+            title="Add a new golf club"
+          >
+            Add New Club
+          </button>
+        </div>
+        
         <ClubEditModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           club={editClub}
           onSave={handleSave}
+          onDelete={handleDelete}
           distanceFields={DISTANCE_FIELDS as unknown as string[]}
           lineField={LINE_FIELD}
         />
-        <ApiDebugger />
       </div>
     </div>
   );

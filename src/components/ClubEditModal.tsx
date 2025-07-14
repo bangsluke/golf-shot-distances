@@ -12,6 +12,7 @@ export interface ClubData {
   'Make': string;
   'Model': string;
   'LastUpdated': string;
+  'ClubOrder': string;
   Comments: string;
   [key: string]: string;
 }
@@ -21,14 +22,18 @@ interface ClubEditModalProps {
   onClose: () => void;
   club: ClubData | null;
   onSave: (club: ClubData) => void;
+  onDelete: (club: ClubData) => void;
   distanceFields: string[];
   lineField: string;
 }
 
-export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lineField }: ClubEditModalProps) {
+export function ClubEditModal({ open, onClose, club, onSave, onDelete, distanceFields, lineField }: ClubEditModalProps) {
   const [form, setForm] = useState<ClubData>(club || ({} as ClubData));
   const [showWarn, setShowWarn] = useState(false);
+  const [showDeleteWarn, setShowDeleteWarn] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isMobile = window.innerWidth < 768;
 
   useEffect(() => {
@@ -55,6 +60,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
       setForm({} as ClubData);
     }
     setDirty(false);
+    setError(null);
   }, [club]);
 
   const handleFieldChange = (field: string, value: string) => {
@@ -78,6 +84,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
     
     setForm(newForm);
     setDirty(true);
+    setError(null);
   };
 
   const handleClose = () => {
@@ -91,6 +98,51 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
   const handleConfirmClose = () => {
     setShowWarn(false);
     onClose();
+  };
+
+  const handleDelete = async () => {
+    console.log('Modal handleDelete called with form:', form);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await onDelete(form);
+      setShowDeleteWarn(false);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete club');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Auto-populate LastUpdated with current date and time
+      const now = new Date();
+      const formattedDateTime = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      const formWithTimestamp = { ...form, 'LastUpdated': formattedDateTime };
+      
+      await onSave(formWithTimestamp);
+      setDirty(false);
+      onClose(); // Close modal on success
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save club data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Only render the modal content if we have a club and modal is open
@@ -149,6 +201,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
             className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-400 hover:text-red-400 text-xl sm:text-2xl font-bold focus:outline-none"
             onClick={handleClose}
             aria-label="Close modal"
+            disabled={isLoading}
             style={{
               position: 'absolute',
               top: isMobile ? '0.5rem' : '1rem',
@@ -158,38 +211,34 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
               fontWeight: 'bold',
               background: 'none',
               border: 'none',
-              cursor: 'pointer'
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.5 : 1
             }}
           >
             ×
           </button>
           
-          <h2 className={`font-bold mb-4 sm:mb-6 text-center ${isMobile ? 'text-lg' : 'text-2xl'}`}>Edit {club['Club']}</h2>
+          <h2 className={`font-bold mb-4 sm:mb-6 text-center ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+            {club['Club'] === 'New Club' ? 'Add New Club' : 'Edit Club'}
+          </h2>
+          
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-900 border border-red-600 rounded-md">
+              <div className="text-red-200 text-sm font-medium">Error: {error}</div>
+            </div>
+          )}
           
           <form
-            onSubmit={e => {
-              e.preventDefault();
-              // Auto-populate LastUpdated with current date and time
-              const now = new Date();
-              const formattedDateTime = now.toLocaleString('en-US', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-              });
-              const formWithTimestamp = { ...form, 'LastUpdated': formattedDateTime };
-              onSave(formWithTimestamp);
-              setDirty(false);
-            }}
+            onSubmit={handleSave}
             className="space-y-3 sm:space-y-4"
           >
             {/* Custom field order */}
             {[
+              'Club',
               'Make',
               'Model', 
+              'ClubOrder',
               'Average Total Distance Hit (Yards)',
               'Average Flat Carry (Yards)',
               'Max Flat Carry (Yards)',
@@ -200,21 +249,24 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
               'LastUpdated'
             ].map(field => {
               const isReadOnly = field === 'Average Roll (Yards)' || field === 'Overhit Risk (Yards)' || field === 'LastUpdated';
-              const isNumberField = field.includes('(Yards)') && field !== 'LastUpdated';
+              const isNumberField = (field.includes('(Yards)') && field !== 'LastUpdated') || field === 'ClubOrder';
               
               return (
                 <div key={field}>
                   <label className={`block font-medium text-gray-200 mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                    {field}
+                    {field === 'Club' && form[field] && form[field].trim() === 'New Club' ? 'Club - Needs to be renamed to be deleted' : field}
                     {isReadOnly && field !== 'LastUpdated' && <span className="text-xs text-gray-400 ml-2">(Calculated)</span>}
                     {field === 'LastUpdated' && <span className="text-xs text-gray-400 ml-2">(Auto-generated)</span>}
+                    {field === 'ClubOrder' && <span className="text-xs text-gray-400 ml-2">(Display order)</span>}
                   </label>
                   <input
                     type={isNumberField ? "number" : "text"}
                     className={`mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}`}
                     value={field === 'LastUpdated' ? (form[field] || 'Will be set on save') : (form[field] || '')}
                     onChange={e => handleFieldChange(field, e.target.value)}
-                    readOnly={isReadOnly}
+                    readOnly={isReadOnly || isLoading}
+                    disabled={isLoading}
+                    min={field === 'ClubOrder' ? "1" : undefined}
                     style={{
                       width: '100%',
                       padding: isMobile ? '0.125rem 0.5rem' : '0.25rem 0.75rem',
@@ -222,45 +274,91 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
                       border: '1px solid #374151',
                       backgroundColor: isReadOnly ? '#374151' : '#1f2937',
                       color: isReadOnly ? '#9ca3af' : 'white',
-                      cursor: isReadOnly ? 'not-allowed' : 'text',
-                      fontSize: isMobile ? '0.75rem' : '0.875rem'
+                      cursor: isReadOnly || isLoading ? 'not-allowed' : 'text',
+                      fontSize: isMobile ? '0.75rem' : '0.875rem',
+                      opacity: isLoading ? 0.7 : 1
                     }}
                   />
                 </div>
               );
             })}
-            <div className="flex justify-end gap-2 mt-6 sm:mt-8">
-              <button 
-                type="button" 
-                onClick={handleClose} 
-                className={`rounded bg-gray-700 text-gray-200 hover:bg-gray-600 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-5 py-1 text-sm'}`}
-                style={{
-                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1.25rem',
-                  borderRadius: '0.375rem',
-                  backgroundColor: '#374151',
-                  color: '#d1d5db',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: isMobile ? '0.75rem' : '0.875rem'
-                }}
-              >
-                Close
-              </button>
-              <button 
-                type="submit" 
-                className={`rounded bg-blue-600 text-white hover:bg-blue-700 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-5 py-1 text-sm'}`}
-                style={{
-                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1.25rem',
-                  borderRadius: '0.375rem',
-                  backgroundColor: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: isMobile ? '0.75rem' : '0.875rem'
-                }}
-              >
-                Save
-              </button>
+            <div className="flex justify-between gap-2 mt-6 sm:mt-8">
+                             {(() => {
+                 const shouldShowDelete = form['Club'] && form['Club'].trim() !== '' && form['Club'].trim() !== 'New Club';
+                 console.log('Delete button visibility check:', {
+                   clubValue: form['Club'],
+                   trimmedValue: form['Club']?.trim(),
+                   shouldShow: shouldShowDelete
+                 });
+                 return shouldShowDelete ? (
+                  <button 
+                    type="button" 
+                    onClick={() => setShowDeleteWarn(true)}
+                    className={`rounded text-white ${isLoading ? 'bg-red-700 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-5 py-1 text-sm'}`}
+                    disabled={isLoading}
+                    style={{
+                      padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1.25rem',
+                      borderRadius: '0.375rem',
+                      backgroundColor: isLoading ? '#b91c1c' : '#dc2626',
+                      color: 'white',
+                      border: 'none',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      fontSize: isMobile ? '0.75rem' : '0.875rem',
+                      opacity: isLoading ? 0.7 : 1
+                    }}
+                  >
+                    Delete Club
+                  </button>
+                ) : null;
+              })()}
+              
+              <div className="flex gap-2">
+                <button 
+                  type="button" 
+                  onClick={handleClose} 
+                  className={`rounded bg-gray-700 text-gray-200 hover:bg-gray-600 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-5 py-1 text-sm'}`}
+                  disabled={isLoading}
+                  style={{
+                    padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1.25rem',
+                    borderRadius: '0.375rem',
+                    backgroundColor: '#374151',
+                    color: '#d1d5db',
+                    border: 'none',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    opacity: isLoading ? 0.5 : 1
+                  }}
+                >
+                  Close
+                </button>
+                <button 
+                  type="submit" 
+                  className={`rounded text-white ${isLoading ? 'bg-blue-700 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-5 py-1 text-sm'}`}
+                  disabled={isLoading}
+                  style={{
+                    padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1.25rem',
+                    borderRadius: '0.375rem',
+                    backgroundColor: isLoading ? '#1d4ed8' : '#2563eb',
+                    color: 'white',
+                    border: 'none',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    fontSize: isMobile ? '0.75rem' : '0.875rem',
+                    opacity: isLoading ? 0.7 : 1
+                  }}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    'Save'
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -333,6 +431,89 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      {(() => {
+        const shouldShowDialog = showDeleteWarn && form['Club'] && form['Club'].trim() !== '' && form['Club'].trim() !== 'New Club';
+        console.log('Delete dialog visibility check:', {
+          showDeleteWarn,
+          clubValue: form['Club'],
+          trimmedValue: form['Club']?.trim(),
+          shouldShow: shouldShowDialog
+        });
+        return shouldShowDialog ? (
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-[999999] bg-black/60"
+          style={{ 
+            zIndex: 999999,
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)'
+          }}
+        >
+          <div 
+            className={`bg-gray-800 text-white rounded-lg shadow-lg border border-gray-600 ${isMobile ? 'p-4' : 'p-8'} ${isMobile ? 'max-w-xs' : 'max-w-sm'} w-full mx-4`}
+            style={{
+              backgroundColor: '#1f2937',
+              color: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+              border: '1px solid #374151',
+              padding: isMobile ? '1rem' : '2rem',
+              maxWidth: isMobile ? '20rem' : '24rem',
+              width: '100%'
+            }}
+          >
+            <div className={`font-bold mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>Delete Club</div>
+            <div className={`mb-6 ${isMobile ? 'text-sm' : 'text-base'}`}>
+              Are you sure you want to delete <span className="font-semibold text-red-400">{form['Club']}</span>? This action cannot be undone.
+            </div>
+            <div className="flex justify-end gap-2">
+              <button 
+                className={`rounded bg-gray-700 text-gray-200 hover:bg-gray-600 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-4 py-1 text-sm'}`}
+                onClick={() => setShowDeleteWarn(false)}
+                disabled={isLoading}
+                style={{
+                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: '#374151',
+                  color: '#d1d5db',
+                  border: 'none',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  opacity: isLoading ? 0.5 : 1
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className={`rounded text-white ${isLoading ? 'bg-red-700 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'} ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-4 py-1 text-sm'}`}
+                onClick={handleDelete}
+                disabled={isLoading}
+                style={{
+                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: isLoading ? '#b91c1c' : '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem',
+                  opacity: isLoading ? 0.7 : 1
+                }}
+              >
+                {isLoading ? 'Deleting...' : 'Delete Club'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null;
+      })()}
     </div>
   );
 
