@@ -506,7 +506,7 @@ function App() {
                     setDistanceToHole(e.target.value);
                     debouncedRecommendClub(e.target.value);
                   }}
-                  className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500 w-20 sm:w-24"
+                  className="distance-hole-input rounded-md border border-gray-400 bg-gray-800 text-white px-2 py-0.5 text-xs focus:ring-blue-500 focus:border-blue-500 w-20 sm:w-24"
                   placeholder="0"
                   min="0"
                 />
@@ -516,7 +516,7 @@ function App() {
                     setRecommendedClub(null);
                     setHighlightedClub(null);
                   }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 rounded text-xs font-medium transition-colors"
+                  className="distance-hole-clear bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-xs font-medium transition-colors"
                   title="Clear distance and highlighting"
                 >
                   Clear

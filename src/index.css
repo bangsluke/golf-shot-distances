@@ -220,3 +220,14 @@ select {
     background-color: #f9f9f9;
   }
 }
+
+@media (max-width: 767px) {
+  .distance-hole-input,
+  .distance-hole-clear {
+    min-height: 28px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+}
