@@ -35,7 +35,7 @@ try {
   console.error('Error stack:', error.stack);
 }
 
-const RANGE = 'Sheet1!A:H'; // Read all columns, filter out calculated ones in code
+const RANGE = 'A:Z'; // Read all columns, filter out calculated ones in code
 
 exports.handler = async (event, context) => {
   console.log('Function called with event:', {
@@ -88,10 +88,21 @@ exports.handler = async (event, context) => {
     
     // GET /api/clubs - Fetch all clubs
     if (event.httpMethod === 'GET' && (path === '/clubs' || path === '/clubs/' || path.includes('clubs'))) {
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: RANGE,
-      });
+      console.log('Attempting to fetch data from spreadsheet:', SPREADSHEET_ID);
+      console.log('Using range:', RANGE);
+      
+      try {
+        // First, let's get the spreadsheet metadata to see available sheets
+        const metadataResponse = await sheets.spreadsheets.get({
+          spreadsheetId: SPREADSHEET_ID,
+        });
+        console.log('Available sheets:', metadataResponse.data.sheets.map(sheet => sheet.properties.title));
+        
+        const response = await sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID,
+          range: RANGE,
+        });
+        console.log('Google Sheets API response received');
       const rows = response.data.values;
       if (!rows || rows.length === 0) {
         return {
@@ -118,11 +129,23 @@ exports.handler = async (event, context) => {
         });
         return filteredClub;
       });
-      return {
-        statusCode: 200,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(filteredClubs),
-      };
+              return {
+          statusCode: 200,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify(filteredClubs),
+        };
+      } catch (sheetsError) {
+        console.error('Google Sheets API error:', sheetsError.message);
+        console.error('Error details:', sheetsError);
+        return {
+          statusCode: 500,
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            error: 'Google Sheets API error',
+            details: sheetsError.message 
+          }),
+        };
+      }
     }
 
     // PUT /api/clubs/:clubName - Update a specific club
