@@ -64,6 +64,7 @@ function App() {
     distance: number;
     difference: number;
   } | null>(null);
+  const [highlightedClub, setHighlightedClub] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
   const fetchClubs = async () => {
@@ -170,6 +171,7 @@ function App() {
         'Average Flat Carry (Yards)': avgFlatCarry,
         'Overhit Risk (Yards)': overhitRisk,
         'Average Total Distance Hit (Yards)': avgTotalDistance,
+        isHighlighted: highlightedClub === club['Club'],
       };
     } catch (error) {
       console.error('Error processing club data:', club, error);
@@ -180,6 +182,7 @@ function App() {
         'Average Flat Carry (Yards)': 0,
         'Overhit Risk (Yards)': 0,
         'Average Total Distance Hit (Yards)': 0,
+        isHighlighted: false,
       };
     }
   });
@@ -208,14 +211,16 @@ function App() {
       return (distance: string) => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
-          if (!distance || !chartData.length) {
-            setRecommendedClub(null);
-            return;
-          }
+                  if (!distance || !chartData.length) {
+          setRecommendedClub(null);
+          setHighlightedClub(null);
+          return;
+        }
 
           const targetDistance = parseFloat(distance);
           if (isNaN(targetDistance)) {
             setRecommendedClub(null);
+            setHighlightedClub(null);
             return;
           }
 
@@ -226,6 +231,7 @@ function App() {
 
           if (validClubs.length === 0) {
             setRecommendedClub(null);
+            setHighlightedClub(null);
             return;
           }
 
@@ -282,6 +288,7 @@ function App() {
             distance: bestDistance,
             difference: actualDifference
           });
+          setHighlightedClub(bestClub['Club']);
         }, 500);
       };
     })(),
@@ -416,12 +423,12 @@ function App() {
                 <YAxis
                   type="category"
                   dataKey="Club"
-                  tick={(props) => <ClickableYAxisTick {...props} clubs={clubs} onEdit={handleEdit} />}
+                  tick={(props) => <ClickableYAxisTick {...props} clubs={clubs} onEdit={handleEdit} highlightedClub={highlightedClub} />}
                   tickLine={false}
                   width={80}
                 />
                 <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
-                {DISTANCE_FIELDS.map((field) => (
+                                {DISTANCE_FIELDS.map((field) => (
                   <Bar
                     key={field}
                     dataKey={field}
@@ -440,7 +447,18 @@ function App() {
                       formatter={(label: React.ReactNode) => (typeof label === 'string' && label !== '0' ? label : '')}
                     />
                   </Bar>
-                                  ))}
+                ))}
+                {/* Highlight overlay for recommended club */}
+                {highlightedClub && (
+                  <Bar
+                    dataKey="isHighlighted"
+                    stackId="highlight"
+                    fill="rgba(255, 255, 0, 0.2)"
+                    barSize={22}
+                    radius={0}
+                    isAnimationActive={false}
+                  />
+                )}
                 <Line
                   type="monotone"
                   dataKey={LINE_FIELD}

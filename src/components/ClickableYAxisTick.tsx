@@ -9,13 +9,15 @@ type ClickableYAxisTickProps = {
   payload: { value: string };
   clubs: ClubData[];
   onEdit: (club: ClubData) => void;
+  highlightedClub?: string | null;
 };
 
-export function ClickableYAxisTick({ x, y, payload, clubs, onEdit }: ClickableYAxisTickProps) {
+export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedClub }: ClickableYAxisTickProps) {
   const [hovered, setHovered] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const clubName = payload.value;
   const club = clubs.find((c: ClubData) => c.Club === clubName);
+  const isHighlighted = highlightedClub === clubName;
 
   useEffect(() => {
     if (hovered) {
@@ -39,15 +41,19 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit }: ClickableYA
             style={{
               display: 'block',
               textAlign: 'right',
-              color: '#fff',
-              fontWeight: 600,
+              color: isHighlighted ? '#ffff00' : '#fff',
+              fontWeight: isHighlighted ? 700 : 600,
               textDecoration: 'underline',
               cursor: 'pointer',
               position: 'relative',
-              fontSize: 14,
+              fontSize: isHighlighted ? 16 : 14,
               lineHeight: '28px',
               width: '100%',
               pointerEvents: 'auto',
+              backgroundColor: isHighlighted ? 'rgba(255, 255, 0, 0.2)' : 'transparent',
+              padding: isHighlighted ? '2px 4px' : '0',
+              borderRadius: isHighlighted ? '4px' : '0',
+              border: isHighlighted ? '2px solid #ffff00' : 'none',
             }}
             onClick={() => {
               if (club) onEdit(club);
