@@ -8,6 +8,7 @@
     "node": "18.x"
   },
   "dependencies": {
-    "googleapis": "^128.0.0"
+    "googleapis": "^128.0.0",
+    "google-auth-library": "^9.0.0"
   }
 } 

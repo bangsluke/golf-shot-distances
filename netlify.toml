@@ -13,10 +13,17 @@
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/test-api"
-  to = "/.netlify/functions/test-api"
+  from = "/api-simple/*"
+  to = "/.netlify/functions/api-simple/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/test"
+  to = "/.netlify/functions/test"
   status = 200
 
 [[redirects]]
