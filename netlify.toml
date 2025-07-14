@@ -16,8 +16,8 @@
   force = true
 
 [[redirects]]
-  from = "/test-api"
-  to = "/.netlify/functions/test-api"
+  from = "/test"
+  to = "/.netlify/functions/test"
   status = 200
 
 [[redirects]]

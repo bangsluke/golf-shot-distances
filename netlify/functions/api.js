@@ -27,6 +27,12 @@ try {
 const RANGE = 'Sheet1!A:H'; // Read all columns, filter out calculated ones in code
 
 exports.handler = async (event, context) => {
+  console.log('Function called with event:', {
+    path: event.path,
+    method: event.httpMethod,
+    headers: event.headers
+  });
+  
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
