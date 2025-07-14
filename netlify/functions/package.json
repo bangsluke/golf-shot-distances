@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Netlify functions for golf shot distances app",
   "main": "api.js",
+  "type": "commonjs",
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "googleapis": "^128.0.0"
   }
