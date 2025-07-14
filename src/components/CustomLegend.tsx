@@ -27,7 +27,7 @@ export function CustomLegend() {
   ];
   return (
     <div className="flex justify-center pb-4">
-      <div className="border border-white bg-white/10 rounded-lg px-6 py-4 min-w-[260px]" style={{ padding: '8px' }}>
+      <div className="border border-gray-600 bg-gray-800 rounded-lg px-6 py-4 min-w-[260px]" style={{ padding: '8px' }}>
         <div className="text-xs font-bold uppercase tracking-wide text-white mb-3 text-center">Legend</div>
         <div className="flex flex-wrap justify-center" style={{ gap: '12px' }}>
           {items.map(item => (

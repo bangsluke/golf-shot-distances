@@ -27,7 +27,7 @@ a:hover {
 }
 
 body {
-  background: #18181b;
+  background: #1f2937;
   min-height: 100vh;
   color: #fff;
 }
@@ -55,11 +55,11 @@ body::before {
 
 /* Shared tooltip styling */
 .custom-tooltip {
-  background: #222 !important;
+  background: #1f2937 !important;
   color: #fff !important;
   opacity: 0.98 !important;
   border-radius: 0.5rem;
-  border: 1px solid #444;
+  border: 1px solid #4b5563;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
   padding: 1rem;
 }

@@ -131,11 +131,11 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
         style={{ zIndex: 999999 }}
       >
         <div 
-          className="relative w-full max-w-2xl mx-auto bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8"
+          className="relative w-full max-w-2xl mx-auto bg-gray-800 text-white rounded-lg shadow-lg border border-gray-600 p-8"
           style={{ 
             zIndex: 999999,
             position: 'relative',
-            backgroundColor: '#111827',
+            backgroundColor: '#1f2937',
             color: 'white',
             borderRadius: '0.5rem',
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
@@ -280,9 +280,9 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
           }}
         >
           <div 
-            className="bg-gray-900 text-white rounded-lg shadow-lg border border-gray-700 p-8 max-w-sm w-full"
+            className="bg-gray-800 text-white rounded-lg shadow-lg border border-gray-600 p-8 max-w-sm w-full"
             style={{
-              backgroundColor: '#111827',
+              backgroundColor: '#1f2937',
               color: 'white',
               borderRadius: '0.5rem',
               boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',

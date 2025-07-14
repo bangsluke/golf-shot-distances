@@ -406,7 +406,7 @@ function App() {
         {loading ? (
           <div className="text-center text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
-          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6" ref={chartRef}>
+          <div className="relative bg-gray-800 rounded-lg shadow-lg p-6" ref={chartRef}>
             <CustomLegend />
             <ResponsiveContainer width="100%" height={chartHeight}>
               <ComposedChart

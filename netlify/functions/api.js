@@ -1,4 +1,10 @@
-const { google } = require('googleapis');
+let google;
+try {
+  google = require('googleapis');
+} catch (error) {
+  console.error('Failed to load googleapis module:', error.message);
+  console.error('This might be a dependency issue. Please ensure googleapis is installed.');
+}
 
 // Validate required environment variables
 const validateEnvironment = () => {
@@ -14,6 +20,10 @@ const validateEnvironment = () => {
 let auth, sheets, SPREADSHEET_ID;
 
 try {
+  if (!google) {
+    throw new Error('googleapis module not loaded');
+  }
+  
   validateEnvironment();
   
   auth = new google.auth.GoogleAuth({
