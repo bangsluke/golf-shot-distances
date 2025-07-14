@@ -13,15 +13,26 @@ const validateEnvironment = () => {
 // Initialize Google Sheets API
 let auth, sheets, SPREADSHEET_ID;
 try {
+  console.log('Starting Google Sheets API initialization...');
   validateEnvironment();
+  console.log('Environment validation passed');
+  
   auth = new GoogleAuth({
     credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
+  console.log('GoogleAuth created successfully');
+  
   sheets = google.sheets({ version: 'v4', auth });
+  console.log('Google Sheets API client created successfully');
+  
   SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
+  console.log('SPREADSHEET_ID set to:', SPREADSHEET_ID ? '***' : 'undefined');
+  
+  console.log('Google Sheets API initialization completed successfully');
 } catch (error) {
   console.error('Failed to initialize Google Sheets API:', error.message);
+  console.error('Error stack:', error.stack);
 }
 
 const RANGE = 'Sheet1!A:H'; // Read all columns, filter out calculated ones in code
@@ -62,13 +73,21 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const path = event.path.replace('/.netlify/functions/api', '');
-    console.log('Request path:', event.path);
+    console.log('Original event.path:', event.path);
+    console.log('Looking for pattern: /.netlify/functions/api');
+    
+    let path = event.path;
+    if (event.path.includes('/.netlify/functions/api')) {
+      path = event.path.replace('/.netlify/functions/api', '');
+    } else if (event.path.includes('/api')) {
+      path = event.path.replace('/api', '');
+    }
+    
     console.log('Processed path:', path);
     console.log('HTTP method:', event.httpMethod);
     
     // GET /api/clubs - Fetch all clubs
-    if (event.httpMethod === 'GET' && (path === '/clubs' || path === '/clubs/')) {
+    if (event.httpMethod === 'GET' && (path === '/clubs' || path === '/clubs/' || path.includes('clubs'))) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: RANGE,
