@@ -27,7 +27,7 @@ try {
   console.error('Failed to initialize Google Sheets API:', error.message);
 }
 
-const RANGE = 'Sheet1!A:H'; // Adjust based on your sheet structure
+const RANGE = 'Sheet1!A:H'; // Read all columns, filter out calculated ones in code
 
 exports.handler = async (event, context) => {
   // Enable CORS
@@ -91,11 +91,21 @@ exports.handler = async (event, context) => {
         return club;
       });
 
-      console.log(`Successfully fetched ${clubs.length} clubs`);
+      // Filter out calculated fields from the response
+      const fieldsToExclude = ['Average Roll (Yards)', 'Overhit Risk (Yards)'];
+      const filteredClubs = clubs.map(club => {
+        const filteredClub = { ...club };
+        fieldsToExclude.forEach(field => {
+          delete filteredClub[field];
+        });
+        return filteredClub;
+      });
+
+      console.log(`Successfully fetched ${filteredClubs.length} clubs`);
       return {
         statusCode: 200,
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(clubs),
+        body: JSON.stringify(filteredClubs),
       };
     }
 
@@ -103,6 +113,13 @@ exports.handler = async (event, context) => {
     if (event.httpMethod === 'PUT' && path.startsWith('/clubs/')) {
       const clubName = decodeURIComponent(path.split('/clubs/')[1]);
       const updatedClub = JSON.parse(event.body);
+
+      // Remove calculated fields from the update data
+      const fieldsToExclude = ['Average Roll (Yards)', 'Overhit Risk (Yards)'];
+      const filteredClub = { ...updatedClub };
+      fieldsToExclude.forEach(field => {
+        delete filteredClub[field];
+      });
 
       console.log('Updating club:', clubName);
 
@@ -132,11 +149,13 @@ exports.handler = async (event, context) => {
         };
       }
 
-      // Update the row
-      const updatedRow = headers.map(header => updatedClub[header] || '');
+      // Filter out calculated fields that shouldn't be saved to the sheet
+      const filteredHeaders = headers.filter(header => !fieldsToExclude.includes(header));
+      const updatedRow = filteredHeaders.map(header => filteredClub[header] || '');
+      
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `Sheet1!A${clubIndex + 1}:H${clubIndex + 1}`,
+        range: `Sheet1!A${clubIndex + 1}:${String.fromCharCode(65 + filteredHeaders.length - 1)}${clubIndex + 1}`,
         valueInputOption: 'RAW',
         resource: {
           values: [updatedRow],
@@ -147,7 +166,7 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 200,
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedClub),
+        body: JSON.stringify(filteredClub),
       };
     }
 

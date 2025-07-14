@@ -11,7 +11,7 @@ const COURSE_CONDITION_INFO = [
 
 export function CourseInfoTooltip() {
   return (
-    <SharedTooltip className="w-128" position="bottom">
+    <SharedTooltip className="" position="bottom" style={{ width: '350px' }}>
       <div className="font-bold mb-2">Course conditions:</div>
       <ul className="list-disc pl-4 space-y-1">
         {COURSE_CONDITION_INFO.map(item => (

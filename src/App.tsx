@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
+  ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
 } from 'recharts';
 import { HiInformationCircle } from 'react-icons/hi';
 import { ClubEditModal } from './components/ClubEditModal';
@@ -21,7 +21,7 @@ const API_URL = import.meta.env.PROD
 
 const BAR_COLORS = {
   'Average Flat Carry (Yards)': '#60a5fa', // blue-400
-  'Carry (Yards)': '#3b82f6', // blue-600
+  'Average Roll (Yards)': '#3b82f6', // blue-600
   'Overhit Risk (Yards)': '#ef4444', // red-500
 };
 
@@ -29,7 +29,7 @@ const LINE_COLOR = '#22c55e'; // green-500
 
 const DISTANCE_FIELDS = [
   'Average Flat Carry (Yards)',
-  'Carry (Yards)',
+  'Average Roll (Yards)',
   'Overhit Risk (Yards)'
 ] as const;
 
@@ -58,6 +58,13 @@ function App() {
   const [airCondition, setAirCondition] = useState('normal');
   const [showTooltip, setShowTooltip] = useState(false);
   const [showAirTooltip, setShowAirTooltip] = useState(false);
+  const [distanceToHole, setDistanceToHole] = useState('');
+  const [recommendedClub, setRecommendedClub] = useState<{
+    club: string;
+    distance: number;
+    difference: number;
+  } | null>(null);
+  const [highlightedClub, setHighlightedClub] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
   const fetchClubs = async () => {
@@ -78,6 +85,8 @@ function App() {
   useEffect(() => {
     fetchClubs();
   }, []);
+
+
 
   const handleEdit = (club: ClubData) => {
     setEditClub(club);
@@ -101,13 +110,13 @@ function App() {
   const yAxisTopMargin = 30; // matches chart margin.top
   const yAxisBottomMargin = 30; // matches chart margin.bottom
 
-  // Compute carry factor and label for course conditions
-  const carryFactor = COURSE_CONDITIONS.find(c => c.value === courseCondition)?.factor ?? 1;
-  let carryLabel = '';
-  if (carryFactor === 1) carryLabel = 'Carry ±0%';
-  else if (carryFactor > 1) carryLabel = `Carry +${Math.round((carryFactor - 1) * 100)}%`;
-  else carryLabel = `Carry ${Math.round((carryFactor - 1) * 100)}%`;
-  const carryLabelColor = carryFactor > 1 ? '#22c55e' : carryFactor < 1 ? '#ef4444' : '#9ca3af';
+  // Compute roll factor and label for course conditions
+  const rollFactor = COURSE_CONDITIONS.find(c => c.value === courseCondition)?.factor ?? 1;
+  let rollLabel = '';
+  if (rollFactor === 1) rollLabel = 'Roll ±0%';
+  else if (rollFactor > 1) rollLabel = `Roll +${Math.round((rollFactor - 1) * 100)}%`;
+  else rollLabel = `Roll ${Math.round((rollFactor - 1) * 100)}%`;
+  const rollLabelColor = rollFactor > 1 ? '#22c55e' : rollFactor < 1 ? '#ef4444' : '#9ca3af';
 
   // Compute air condition factor and label
   let airLabel = '';
@@ -123,44 +132,156 @@ function App() {
     airLabelColor = '#9ca3af';
   }
 
-  // Adjust Average Flat Carry and Overhit Risk based on air condition
+  // Calculate Carry and Overhit Risk, then adjust based on conditions
   const chartData = clubs.map(club => {
     try {
-      const carryRaw = parseFloat(club['Carry (Yards)']);
-      const avgFlatCarryRaw = parseFloat(club['Average Flat Carry (Yards)']);
-      const overhitRiskRaw = parseFloat(club['Overhit Risk (Yards)']);
+      // Parse values, handling empty strings
+      const avgTotalDistanceStr = club['Average Total Distance Hit (Yards)'] || '';
+      const avgFlatCarryStr = club['Average Flat Carry (Yards)'] || '';
+      const maxTotalDistanceStr = club['Max Total Distance Hit (Yards)'] || '';
+      
+      const avgTotalDistance = avgTotalDistanceStr ? parseFloat(avgTotalDistanceStr) : 0;
+      const avgFlatCarryRaw = avgFlatCarryStr ? parseFloat(avgFlatCarryStr) : 0;
+      const maxTotalDistance = maxTotalDistanceStr ? parseFloat(maxTotalDistanceStr) : 0;
+      
+      // Only calculate if we have valid data
+      let averageRoll = 0;
+      let overhitRisk = 0;
+      let avgFlatCarry = avgFlatCarryRaw;
+      
+      if (avgTotalDistance > 0 && avgFlatCarryRaw > 0) {
+        averageRoll = (avgTotalDistance - avgFlatCarryRaw) * rollFactor;
+      }
+      
+      if (maxTotalDistance > 0 && avgTotalDistance > 0) {
+        overhitRisk = maxTotalDistance - avgTotalDistance;
+      }
 
-      const carry = (isNaN(carryRaw) ? 0 : carryRaw) * carryFactor;
-      let avgFlatCarry = isNaN(avgFlatCarryRaw) ? 0 : avgFlatCarryRaw;
-      let overhitRisk = isNaN(overhitRiskRaw) ? 0 : overhitRiskRaw;
-
-      if (airCondition === 'rainy') {
+      // Apply air condition adjustments
+      if (airCondition === 'rainy' && avgFlatCarry > 0) {
         avgFlatCarry = avgFlatCarry * 0.9;
       }
-      if (airCondition === 'windy') {
+      if (airCondition === 'windy' && overhitRisk > 0) {
         overhitRisk = overhitRisk * 1.2;
       }
 
-      // Use the value from the sheet for Average Total Distance Hit (Yards)
+      // Recalculate total distance based on adjusted flat carry and roll
+      const adjustedTotalDistance = avgFlatCarry + averageRoll;
+
       return {
         ...club,
-        'Carry (Yards)': carry.toFixed(0),
-        'Average Flat Carry (Yards)': avgFlatCarry.toFixed(0),
-        'Overhit Risk (Yards)': overhitRisk.toFixed(0),
-        'Average Total Distance Hit (Yards)': club['Average Total Distance Hit (Yards)'],
+        'Average Roll (Yards)': Math.round(averageRoll),
+        'Average Flat Carry (Yards)': Math.round(avgFlatCarry),
+        'Overhit Risk (Yards)': Math.round(overhitRisk),
+        'Average Total Distance Hit (Yards)': Math.round(adjustedTotalDistance),
+        isHighlighted: highlightedClub === club['Club'],
       };
     } catch (error) {
       console.error('Error processing club data:', club, error);
       // Return a safe fallback
       return {
         ...club,
-        'Carry (Yards)': '0',
-        'Average Flat Carry (Yards)': '0',
-        'Overhit Risk (Yards)': '0',
-        'Average Total Distance Hit (Yards)': '0',
+        'Average Roll (Yards)': 0,
+        'Average Flat Carry (Yards)': 0,
+        'Overhit Risk (Yards)': 0,
+        'Average Total Distance Hit (Yards)': 0,
+        isHighlighted: false,
       };
     }
   });
+
+
+
+  // Debounced club recommendation function
+  const debouncedRecommendClub = useCallback(
+    (() => {
+      let timeoutId: ReturnType<typeof setTimeout>;
+      return (distance: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+                  if (!distance || !chartData.length) {
+          setRecommendedClub(null);
+          setHighlightedClub(null);
+          return;
+        }
+
+          const targetDistance = parseFloat(distance);
+          if (isNaN(targetDistance)) {
+            setRecommendedClub(null);
+            setHighlightedClub(null);
+            return;
+          }
+
+          // Filter clubs with valid Average Total Distance Hit data
+          const validClubs = chartData.filter(club => 
+            club['Average Total Distance Hit (Yards)'] > 0
+          );
+
+          if (validClubs.length === 0) {
+            setRecommendedClub(null);
+            setHighlightedClub(null);
+            return;
+          }
+
+          let bestClub = validClubs[0];
+          let bestDistance = bestClub['Average Total Distance Hit (Yards)'];
+          let bestDifference = Math.abs(bestDistance - targetDistance);
+
+          // Determine search strategy based on conditions
+          const isDryCondition = courseCondition.includes('dry');
+          const isWetCondition = courseCondition.includes('wet');
+
+          if (isDryCondition) {
+            // For dry conditions: find closest club that hits LESS than target distance
+            validClubs.forEach(club => {
+              const clubDistance = club['Average Total Distance Hit (Yards)'];
+              if (clubDistance <= targetDistance) {
+                const difference = targetDistance - clubDistance;
+                if (difference < bestDifference) {
+                  bestClub = club;
+                  bestDistance = clubDistance;
+                  bestDifference = difference;
+                }
+              }
+            });
+          } else if (isWetCondition) {
+            // For wet conditions: find closest club that hits MORE than target distance
+            validClubs.forEach(club => {
+              const clubDistance = club['Average Total Distance Hit (Yards)'];
+              if (clubDistance >= targetDistance) {
+                const difference = clubDistance - targetDistance;
+                if (difference < bestDifference) {
+                  bestClub = club;
+                  bestDistance = clubDistance;
+                  bestDifference = difference;
+                }
+              }
+            });
+          } else {
+            // For normal conditions: find closest club regardless of over/under
+            validClubs.forEach(club => {
+              const clubDistance = club['Average Total Distance Hit (Yards)'];
+              const difference = Math.abs(clubDistance - targetDistance);
+              if (difference < bestDifference) {
+                bestClub = club;
+                bestDistance = clubDistance;
+                bestDifference = difference;
+              }
+            });
+          }
+
+          const actualDifference = bestDistance - targetDistance;
+          setRecommendedClub({
+            club: bestClub['Club'],
+            distance: bestDistance,
+            difference: actualDifference
+          });
+          setHighlightedClub(bestClub['Club']);
+        }, 500);
+      };
+    })(),
+    [chartData, courseCondition]
+  );
 
   return (
     <div className="min-h-screen p-6">
@@ -171,7 +292,22 @@ function App() {
         <div className="flex flex-col md:flex-row md:justify-center gap-8 mb-8 items-start w-full">
           <div className="flex flex-col items-center w-full md:w-auto">
             <div className="flex items-center" style={{ gap: '24px' }}>
-              <label htmlFor="course-conditions" className="font-semibold text-white text-sm">Course conditions:</label>
+              <div className="relative">
+                <label 
+                  htmlFor="course-conditions" 
+                  className="font-semibold text-white text-sm cursor-help"
+                  style={{ borderBottom: '1px dotted #9ca3af' }}
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  onFocus={() => setShowTooltip(true)}
+                  onBlur={() => setShowTooltip(false)}
+                  onTouchStart={() => setShowTooltip(true)}
+                  onTouchEnd={() => setShowTooltip(false)}
+                >
+                  Course conditions:
+                </label>
+                {showTooltip && <CourseInfoTooltip />}
+              </div>
               <select
                 id="course-conditions"
                 className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
@@ -182,26 +318,27 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className={`text-xs font-semibold`} style={{ color: carryLabelColor }}>{carryLabel}</div>
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-label="Course conditions info"
-                  className="text-white hover:text-blue-400 focus:outline-none"
-                  onMouseEnter={() => setShowTooltip(true)}
-                  onMouseLeave={() => setShowTooltip(false)}
-                  onFocus={() => setShowTooltip(true)}
-                  onBlur={() => setShowTooltip(false)}
-                >
-                  <HiInformationCircle className="h-5 w-5" />
-                </button>
-                {showTooltip && <CourseInfoTooltip />}
-              </div>
+              <div className={`text-xs font-semibold`} style={{ color: rollLabelColor }}>{rollLabel}</div>
             </div>
           </div>
           <div className="flex flex-col items-center w-full md:w-auto">
             <div className="flex items-center" style={{ gap: '24px' }}>
-              <label htmlFor="air-conditions" className="font-semibold text-white text-sm">Air conditions:</label>
+              <div className="relative">
+                <label 
+                  htmlFor="air-conditions" 
+                  className="font-semibold text-white text-sm cursor-help"
+                  style={{ borderBottom: '1px dotted #9ca3af' }}
+                  onMouseEnter={() => setShowAirTooltip(true)}
+                  onMouseLeave={() => setShowAirTooltip(false)}
+                  onFocus={() => setShowAirTooltip(true)}
+                  onBlur={() => setShowAirTooltip(false)}
+                  onTouchStart={() => setShowAirTooltip(true)}
+                  onTouchEnd={() => setShowAirTooltip(false)}
+                >
+                  Air conditions:
+                </label>
+                {showAirTooltip && <AirInfoTooltip />}
+              </div>
               <select
                 id="air-conditions"
                 className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
@@ -213,49 +350,86 @@ function App() {
                 ))}
               </select>
               <div className={`text-xs font-semibold`} style={{ color: airLabelColor }}>{airLabel}</div>
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-label="Air conditions info"
-                  className="text-white hover:text-blue-400 focus:outline-none"
-                  onMouseEnter={() => setShowAirTooltip(true)}
-                  onMouseLeave={() => setShowAirTooltip(false)}
-                  onFocus={() => setShowAirTooltip(true)}
-                  onBlur={() => setShowAirTooltip(false)}
-                >
-                  <HiInformationCircle className="h-5 w-5" />
-                </button>
-                {showAirTooltip && <AirInfoTooltip />}
-              </div>
             </div>
           </div>
         </div>
+        
+        {/* Distance to Hole Input */}
+        <div className="flex flex-col md:flex-row md:justify-center gap-4 mb-6 items-center">
+          <div className="flex items-center gap-3">
+            <label htmlFor="distance-to-hole" className="font-semibold text-white text-sm">
+              Distance to hole (yards):
+            </label>
+            <input
+              id="distance-to-hole"
+              type="number"
+              value={distanceToHole}
+              onChange={(e) => {
+                setDistanceToHole(e.target.value);
+                debouncedRecommendClub(e.target.value);
+              }}
+              className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 w-24"
+              placeholder="0"
+              min="0"
+            />
+            <button
+              onClick={() => {
+                setDistanceToHole('');
+                setRecommendedClub(null);
+                setHighlightedClub(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+              title="Clear distance and highlighting"
+            >
+              Clear
+            </button>
+          </div>
+          
+          {recommendedClub && (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-white">Recommended:</span>
+              <span className="font-semibold text-blue-400">{recommendedClub.club}</span>
+              <span className="text-white">({recommendedClub.distance} yards)</span>
+              <span 
+                className={`font-semibold ${
+                  recommendedClub.difference > 0 
+                    ? 'text-red-400' 
+                    : 'text-green-400'
+                }`}
+              >
+                {recommendedClub.difference > 0 ? '+' : ''}{recommendedClub.difference} yards
+              </span>
+            </div>
+          )}
+        </div>
+        
         {loading ? (
           <div className="text-center text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
           <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6" ref={chartRef}>
             <CustomLegend />
             <ResponsiveContainer width="100%" height={chartHeight}>
-              <BarChart
+              <ComposedChart
                 data={chartData}
                 layout="vertical"
                 margin={{ top: yAxisTopMargin, right: 40, left: 120, bottom: yAxisBottomMargin }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3"  vertical={true} horizontal={true} />
                 <XAxis
                   type="number"
                   tick={{ fontSize: 12, fill: '#fff' }}
                   domain={[0, 'dataMax + 30']}
+                  tickCount={10}
                   label={{ value: 'Distance (yards)', position: 'insideBottom', offset: -10, fill: '#fff', fontSize: 14 }}
                 />
                 <YAxis
                   type="category"
                   dataKey="Club"
-                  tick={(props) => <ClickableYAxisTick {...props} clubs={clubs} onEdit={handleEdit} />}
+                  tick={(props) => <ClickableYAxisTick {...props} clubs={clubs} onEdit={handleEdit} highlightedClub={highlightedClub} />}
                   tickLine={false}
                   width={80}
                 />
-                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
+                                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
                 {DISTANCE_FIELDS.map((field) => (
                   <Bar
                     key={field}
@@ -285,10 +459,23 @@ function App() {
                   activeDot={{ r: 7 }}
                   isAnimationActive={true}
                   animationDuration={600}
-                  label={{ position: 'top', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
+                  label={{ position: 'right', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
                   style={{ cursor: 'pointer' }}
+                  connectNulls={false}
                 />
-              </BarChart>
+                {/* Highlight overlay for recommended club */}
+                {highlightedClub && (
+                  <Bar
+                    dataKey="isHighlighted"
+                    stackId="highlight"
+                    fill="rgba(255, 255, 0, 0.2)"
+                    barSize={22}
+                    radius={0}
+                    isAnimationActive={false}
+                  />
+                )}
+
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         )}
