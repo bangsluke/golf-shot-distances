@@ -4,6 +4,10 @@ const { google } = require('googleapis');
 // Validate required environment variables
 const validateEnvironment = () => {
   const requiredVars = ['GOOGLE_SERVICE_ACCOUNT_KEY', 'GOOGLE_SPREADSHEET_ID', 'GOOGLE_SHEET_TAB'];
+  console.log('Checking environment variables:');
+  requiredVars.forEach(varName => {
+    console.log(`${varName}: ${process.env[varName] ? 'SET' : 'MISSING'}`);
+  });
   const missing = requiredVars.filter(varName => !process.env[varName]);
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
@@ -11,7 +15,7 @@ const validateEnvironment = () => {
 };
 
 // Initialize Google Sheets API
-let auth, sheets, SPREADSHEET_ID;
+let auth, sheets, SPREADSHEET_ID, SHEET_TAB;
 try {
   console.log('Starting Google Sheets API initialization...');
   validateEnvironment();
@@ -29,7 +33,7 @@ try {
   SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
   console.log('SPREADSHEET_ID set to:', SPREADSHEET_ID ? '***' : 'undefined');
   
-  const SHEET_TAB = process.env.GOOGLE_SHEET_TAB;
+  SHEET_TAB = process.env.GOOGLE_SHEET_TAB;
   console.log('SHEET_TAB set to:', SHEET_TAB);
   
   console.log('Google Sheets API initialization completed successfully');
@@ -64,13 +68,23 @@ exports.handler = async (event, context) => {
   }
 
   // Check if Google Sheets API is properly initialized
+  console.log('Checking initialization status:');
+  console.log('sheets:', sheets ? 'initialized' : 'not initialized');
+  console.log('SPREADSHEET_ID:', SPREADSHEET_ID ? 'set' : 'not set');
+  console.log('SHEET_TAB:', SHEET_TAB ? 'set' : 'not set');
+  
   if (!sheets || !SPREADSHEET_ID || !SHEET_TAB) {
+    const missing = [];
+    if (!sheets) missing.push('Google Sheets client');
+    if (!SPREADSHEET_ID) missing.push('SPREADSHEET_ID');
+    if (!SHEET_TAB) missing.push('SHEET_TAB');
+    
     return {
       statusCode: 500,
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         error: 'Server configuration error',
-        details: 'Google Sheets API not properly configured'
+        details: `Google Sheets API not properly configured. Missing: ${missing.join(', ')}`
       }),
     };
   }
