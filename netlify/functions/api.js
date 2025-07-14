@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 
 // Validate required environment variables
 const validateEnvironment = () => {
-  const requiredVars = ['GOOGLE_SERVICE_ACCOUNT_KEY', 'GOOGLE_SPREADSHEET_ID'];
+  const requiredVars = ['GOOGLE_SERVICE_ACCOUNT_KEY', 'GOOGLE_SPREADSHEET_ID', 'GOOGLE_SHEET_TAB'];
   const missing = requiredVars.filter(varName => !process.env[varName]);
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
@@ -29,13 +29,16 @@ try {
   SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
   console.log('SPREADSHEET_ID set to:', SPREADSHEET_ID ? '***' : 'undefined');
   
+  const SHEET_TAB = process.env.GOOGLE_SHEET_TAB;
+  console.log('SHEET_TAB set to:', SHEET_TAB);
+  
   console.log('Google Sheets API initialization completed successfully');
 } catch (error) {
   console.error('Failed to initialize Google Sheets API:', error.message);
   console.error('Error stack:', error.stack);
 }
 
-const RANGE = 'A:Z'; // Read all columns, filter out calculated ones in code
+// We'll construct the range dynamically using the SHEET_TAB environment variable
 
 exports.handler = async (event, context) => {
   console.log('Function called with event:', {
@@ -61,7 +64,7 @@ exports.handler = async (event, context) => {
   }
 
   // Check if Google Sheets API is properly initialized
-  if (!sheets || !SPREADSHEET_ID) {
+  if (!sheets || !SPREADSHEET_ID || !SHEET_TAB) {
     return {
       statusCode: 500,
       headers: { ...headers, 'Content-Type': 'application/json' },
@@ -88,8 +91,9 @@ exports.handler = async (event, context) => {
     
     // GET /api/clubs - Fetch all clubs
     if (event.httpMethod === 'GET' && (path === '/clubs' || path === '/clubs/' || path.includes('clubs'))) {
+      const range = `${SHEET_TAB}!A:Z`;
       console.log('Attempting to fetch data from spreadsheet:', SPREADSHEET_ID);
-      console.log('Using range:', RANGE);
+      console.log('Using range:', range);
       
       try {
         // First, let's get the spreadsheet metadata to see available sheets
@@ -100,11 +104,14 @@ exports.handler = async (event, context) => {
         
         const response = await sheets.spreadsheets.values.get({
           spreadsheetId: SPREADSHEET_ID,
-          range: RANGE,
+          range: range,
         });
         console.log('Google Sheets API response received');
-      const rows = response.data.values;
-      if (!rows || rows.length === 0) {
+        console.log('Response data:', JSON.stringify(response.data, null, 2));
+        const rows = response.data.values;
+        console.log('Number of rows received:', rows ? rows.length : 0);
+        console.log('First few rows:', rows ? rows.slice(0, 3) : 'No rows');
+        if (!rows || rows.length === 0) {
         return {
           statusCode: 200,
           headers: { ...headers, 'Content-Type': 'application/json' },
@@ -129,6 +136,7 @@ exports.handler = async (event, context) => {
         });
         return filteredClub;
       });
+      console.log('Final filtered clubs:', JSON.stringify(filteredClubs, null, 2));
               return {
           statusCode: 200,
           headers: { ...headers, 'Content-Type': 'application/json' },
@@ -159,9 +167,10 @@ exports.handler = async (event, context) => {
         delete filteredClub[field];
       });
       // Find the row index for the club
+      const range = `${SHEET_TAB}!A:Z`;
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: RANGE,
+        range: range,
       });
       const rows = response.data.values;
       if (!rows || rows.length === 0) {
@@ -185,7 +194,7 @@ exports.handler = async (event, context) => {
       const updatedRow = filteredHeaders.map(header => filteredClub[header] || '');
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `Sheet1!A${clubIndex + 1}:${String.fromCharCode(65 + filteredHeaders.length - 1)}${clubIndex + 1}`,
+        range: `${SHEET_TAB}!A${clubIndex + 1}:${String.fromCharCode(65 + filteredHeaders.length - 1)}${clubIndex + 1}`,
         valueInputOption: 'RAW',
         resource: {
           values: [updatedRow],
