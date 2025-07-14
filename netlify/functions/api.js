@@ -57,9 +57,12 @@ exports.handler = async (event, context) => {
 
   try {
     const path = event.path.replace('/.netlify/functions/api', '');
+    console.log('Request path:', event.path);
+    console.log('Processed path:', path);
+    console.log('HTTP method:', event.httpMethod);
     
     // GET /api/clubs - Fetch all clubs
-    if (event.httpMethod === 'GET' && path === '/clubs') {
+    if (event.httpMethod === 'GET' && (path === '/clubs' || path === '/clubs/')) {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: RANGE,
@@ -148,10 +151,15 @@ exports.handler = async (event, context) => {
     }
 
     // Default response for unknown routes
+    console.log('No matching route found for:', event.httpMethod, path);
     return {
       statusCode: 404,
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Route not found' }),
+      body: JSON.stringify({ 
+        error: 'Route not found',
+        path: path,
+        method: event.httpMethod
+      }),
     };
 
   } catch (error) {
