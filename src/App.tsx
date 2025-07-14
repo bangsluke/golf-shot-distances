@@ -418,8 +418,8 @@ function App() {
 
   return (
     <div className="min-h-screen p-1 sm:p-2 md:p-6">
-      <div className="golf-main w-full max-w-5xl mx-auto">
-        <h1 className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-4 md:mb-6 text-center text-blue-900 dark:text-white">
+      <div className="golf-main w-full max-w-5xl mx-auto" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
+        <h1 className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-4 md:mb-6 text-center text-white">
           Average Club Distances
         </h1>
         
@@ -644,15 +644,11 @@ function App() {
         <div className="flex justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
           <button
             onClick={reorderClubs}
-            className={`text-white px-3 sm:px-4 py-1 sm:py-2 rounded text-xs sm:text-sm font-medium transition-colors ${
-              loading || reordering 
-                ? 'bg-gray-600 cursor-not-allowed' 
-                : 'bg-green-600 hover:bg-green-700'
-            }`}
-            title="Reorder clubs by assigning ClubOrder values"
-            disabled={loading || reordering}
+            className={`text-white px-3 sm:px-4 py-1 sm:py-2 rounded text-xs sm:text-sm font-medium transition-colors bg-gray-600 cursor-not-allowed`}
+            title="Reordering is currently disabled"
+            disabled
           >
-            {loading || reordering ? 'Reordering...' : 'Reorder Clubs'}
+            Reorder Clubs
           </button>
           <button
             onClick={handleAdd}
