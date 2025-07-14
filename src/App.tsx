@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
@@ -58,6 +58,12 @@ function App() {
   const [airCondition, setAirCondition] = useState('normal');
   const [showTooltip, setShowTooltip] = useState(false);
   const [showAirTooltip, setShowAirTooltip] = useState(false);
+  const [distanceToHole, setDistanceToHole] = useState('');
+  const [recommendedClub, setRecommendedClub] = useState<{
+    club: string;
+    distance: number;
+    difference: number;
+  } | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
   const fetchClubs = async () => {
@@ -78,6 +84,8 @@ function App() {
   useEffect(() => {
     fetchClubs();
   }, []);
+
+
 
   const handleEdit = (club: ClubData) => {
     setEditClub(club);
@@ -193,6 +201,93 @@ function App() {
   
   console.log('========================');
 
+  // Debounced club recommendation function
+  const debouncedRecommendClub = useCallback(
+    (() => {
+      let timeoutId: ReturnType<typeof setTimeout>;
+      return (distance: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          if (!distance || !chartData.length) {
+            setRecommendedClub(null);
+            return;
+          }
+
+          const targetDistance = parseFloat(distance);
+          if (isNaN(targetDistance)) {
+            setRecommendedClub(null);
+            return;
+          }
+
+          // Filter clubs with valid Average Total Distance Hit data
+          const validClubs = chartData.filter(club => 
+            club['Average Total Distance Hit (Yards)'] > 0
+          );
+
+          if (validClubs.length === 0) {
+            setRecommendedClub(null);
+            return;
+          }
+
+          let bestClub = validClubs[0];
+          let bestDistance = bestClub['Average Total Distance Hit (Yards)'];
+          let bestDifference = Math.abs(bestDistance - targetDistance);
+
+          // Determine search strategy based on conditions
+          const isDryCondition = courseCondition.includes('dry');
+          const isWetCondition = courseCondition.includes('wet');
+
+          if (isDryCondition) {
+            // For dry conditions: find closest club that hits LESS than target distance
+            validClubs.forEach(club => {
+              const clubDistance = club['Average Total Distance Hit (Yards)'];
+              if (clubDistance <= targetDistance) {
+                const difference = targetDistance - clubDistance;
+                if (difference < bestDifference) {
+                  bestClub = club;
+                  bestDistance = clubDistance;
+                  bestDifference = difference;
+                }
+              }
+            });
+          } else if (isWetCondition) {
+            // For wet conditions: find closest club that hits MORE than target distance
+            validClubs.forEach(club => {
+              const clubDistance = club['Average Total Distance Hit (Yards)'];
+              if (clubDistance >= targetDistance) {
+                const difference = clubDistance - targetDistance;
+                if (difference < bestDifference) {
+                  bestClub = club;
+                  bestDistance = clubDistance;
+                  bestDifference = difference;
+                }
+              }
+            });
+          } else {
+            // For normal conditions: find closest club regardless of over/under
+            validClubs.forEach(club => {
+              const clubDistance = club['Average Total Distance Hit (Yards)'];
+              const difference = Math.abs(clubDistance - targetDistance);
+              if (difference < bestDifference) {
+                bestClub = club;
+                bestDistance = clubDistance;
+                bestDifference = difference;
+              }
+            });
+          }
+
+          const actualDifference = bestDistance - targetDistance;
+          setRecommendedClub({
+            club: bestClub['Club'],
+            distance: bestDistance,
+            difference: actualDifference
+          });
+        }, 500);
+      };
+    })(),
+    [chartData, courseCondition]
+  );
+
   return (
     <div className="min-h-screen p-6">
       <div className="golf-main max-w-5xl mx-auto">
@@ -261,6 +356,45 @@ function App() {
             </div>
           </div>
         </div>
+        
+        {/* Distance to Hole Input */}
+        <div className="flex flex-col md:flex-row md:justify-center gap-4 mb-6 items-center">
+          <div className="flex items-center gap-3">
+            <label htmlFor="distance-to-hole" className="font-semibold text-white text-sm">
+              Distance to hole (yards):
+            </label>
+            <input
+              id="distance-to-hole"
+              type="number"
+              value={distanceToHole}
+              onChange={(e) => {
+                setDistanceToHole(e.target.value);
+                debouncedRecommendClub(e.target.value);
+              }}
+              className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 w-24"
+              placeholder="0"
+              min="0"
+            />
+          </div>
+          
+          {recommendedClub && (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-white">Recommended:</span>
+              <span className="font-semibold text-blue-400">{recommendedClub.club}</span>
+              <span className="text-white">({recommendedClub.distance} yards)</span>
+              <span 
+                className={`font-semibold ${
+                  recommendedClub.difference > 0 
+                    ? 'text-red-400' 
+                    : 'text-green-400'
+                }`}
+              >
+                {recommendedClub.difference > 0 ? '+' : ''}{recommendedClub.difference} yards
+              </span>
+            </div>
+          )}
+        </div>
+        
         {loading ? (
           <div className="text-center text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
