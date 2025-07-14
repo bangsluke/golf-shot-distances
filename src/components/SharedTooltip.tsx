@@ -27,7 +27,7 @@ export function SharedTooltip({
   return (
     <div className={`
       absolute ${positionClasses[position]}
-      custom-tooltip bg-gray-900 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-700
+      custom-tooltip bg-gray-800 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-600
       ${className}
     `} style={style}>
       {children}
