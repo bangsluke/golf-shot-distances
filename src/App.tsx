@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
   ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
 } from 'recharts';
-import { HiInformationCircle } from 'react-icons/hi';
+
 import { ClubEditModal } from './components/ClubEditModal';
 import type { ClubData } from './components/ClubEditModal';
 import { CustomTooltip } from './components/CustomTooltip';
