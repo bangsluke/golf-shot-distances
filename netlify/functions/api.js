@@ -92,7 +92,7 @@ exports.handler = async (event, context) => {
       });
 
       // Filter out calculated fields from the response
-      const fieldsToExclude = ['Carry (Yards)', 'Overhit Risk (Yards)'];
+      const fieldsToExclude = ['Average Roll (Yards)', 'Overhit Risk (Yards)'];
       const filteredClubs = clubs.map(club => {
         const filteredClub = { ...club };
         fieldsToExclude.forEach(field => {
@@ -115,7 +115,7 @@ exports.handler = async (event, context) => {
       const updatedClub = JSON.parse(event.body);
 
       // Remove calculated fields from the update data
-      const fieldsToExclude = ['Carry (Yards)', 'Overhit Risk (Yards)'];
+      const fieldsToExclude = ['Average Roll (Yards)', 'Overhit Risk (Yards)'];
       const filteredClub = { ...updatedClub };
       fieldsToExclude.forEach(field => {
         delete filteredClub[field];

@@ -21,7 +21,7 @@ const API_URL = import.meta.env.PROD
 
 const BAR_COLORS = {
   'Average Flat Carry (Yards)': '#60a5fa', // blue-400
-  'Carry (Yards)': '#3b82f6', // blue-600
+  'Average Roll (Yards)': '#3b82f6', // blue-600
   'Overhit Risk (Yards)': '#ef4444', // red-500
 };
 
@@ -29,7 +29,7 @@ const LINE_COLOR = '#22c55e'; // green-500
 
 const DISTANCE_FIELDS = [
   'Average Flat Carry (Yards)',
-  'Carry (Yards)',
+  'Average Roll (Yards)',
   'Overhit Risk (Yards)'
 ] as const;
 
@@ -110,13 +110,13 @@ function App() {
   const yAxisTopMargin = 30; // matches chart margin.top
   const yAxisBottomMargin = 30; // matches chart margin.bottom
 
-  // Compute carry factor and label for course conditions
-  const carryFactor = COURSE_CONDITIONS.find(c => c.value === courseCondition)?.factor ?? 1;
-  let carryLabel = '';
-  if (carryFactor === 1) carryLabel = 'Carry ±0%';
-  else if (carryFactor > 1) carryLabel = `Carry +${Math.round((carryFactor - 1) * 100)}%`;
-  else carryLabel = `Carry ${Math.round((carryFactor - 1) * 100)}%`;
-  const carryLabelColor = carryFactor > 1 ? '#22c55e' : carryFactor < 1 ? '#ef4444' : '#9ca3af';
+  // Compute roll factor and label for course conditions
+  const rollFactor = COURSE_CONDITIONS.find(c => c.value === courseCondition)?.factor ?? 1;
+  let rollLabel = '';
+  if (rollFactor === 1) rollLabel = 'Roll ±0%';
+  else if (rollFactor > 1) rollLabel = `Roll +${Math.round((rollFactor - 1) * 100)}%`;
+  else rollLabel = `Roll ${Math.round((rollFactor - 1) * 100)}%`;
+  const rollLabelColor = rollFactor > 1 ? '#22c55e' : rollFactor < 1 ? '#ef4444' : '#9ca3af';
 
   // Compute air condition factor and label
   let airLabel = '';
@@ -145,12 +145,12 @@ function App() {
       const maxTotalDistance = maxTotalDistanceStr ? parseFloat(maxTotalDistanceStr) : 0;
       
       // Only calculate if we have valid data
-      let carry = 0;
+      let averageRoll = 0;
       let overhitRisk = 0;
       let avgFlatCarry = avgFlatCarryRaw;
       
       if (avgTotalDistance > 0 && avgFlatCarryRaw > 0) {
-        carry = (avgTotalDistance - avgFlatCarryRaw) * carryFactor;
+        averageRoll = (avgTotalDistance - avgFlatCarryRaw) * rollFactor;
       }
       
       if (maxTotalDistance > 0 && avgTotalDistance > 0) {
@@ -165,12 +165,15 @@ function App() {
         overhitRisk = overhitRisk * 1.2;
       }
 
+      // Recalculate total distance based on adjusted flat carry and roll
+      const adjustedTotalDistance = avgFlatCarry + averageRoll;
+
       return {
         ...club,
-        'Carry (Yards)': carry,
-        'Average Flat Carry (Yards)': avgFlatCarry,
-        'Overhit Risk (Yards)': overhitRisk,
-        'Average Total Distance Hit (Yards)': avgTotalDistance,
+        'Average Roll (Yards)': Math.round(averageRoll),
+        'Average Flat Carry (Yards)': Math.round(avgFlatCarry),
+        'Overhit Risk (Yards)': Math.round(overhitRisk),
+        'Average Total Distance Hit (Yards)': Math.round(adjustedTotalDistance),
         isHighlighted: highlightedClub === club['Club'],
       };
     } catch (error) {
@@ -178,7 +181,7 @@ function App() {
       // Return a safe fallback
       return {
         ...club,
-        'Carry (Yards)': 0,
+        'Average Roll (Yards)': 0,
         'Average Flat Carry (Yards)': 0,
         'Overhit Risk (Yards)': 0,
         'Average Total Distance Hit (Yards)': 0,
@@ -289,7 +292,22 @@ function App() {
         <div className="flex flex-col md:flex-row md:justify-center gap-8 mb-8 items-start w-full">
           <div className="flex flex-col items-center w-full md:w-auto">
             <div className="flex items-center" style={{ gap: '24px' }}>
-              <label htmlFor="course-conditions" className="font-semibold text-white text-sm">Course conditions:</label>
+              <div className="relative">
+                <label 
+                  htmlFor="course-conditions" 
+                  className="font-semibold text-white text-sm cursor-help"
+                  style={{ borderBottom: '1px dotted #9ca3af' }}
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  onFocus={() => setShowTooltip(true)}
+                  onBlur={() => setShowTooltip(false)}
+                  onTouchStart={() => setShowTooltip(true)}
+                  onTouchEnd={() => setShowTooltip(false)}
+                >
+                  Course conditions:
+                </label>
+                {showTooltip && <CourseInfoTooltip />}
+              </div>
               <select
                 id="course-conditions"
                 className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
@@ -300,26 +318,27 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className={`text-xs font-semibold`} style={{ color: carryLabelColor }}>{carryLabel}</div>
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-label="Course conditions info"
-                  className="text-white hover:text-blue-400 focus:outline-none"
-                  onMouseEnter={() => setShowTooltip(true)}
-                  onMouseLeave={() => setShowTooltip(false)}
-                  onFocus={() => setShowTooltip(true)}
-                  onBlur={() => setShowTooltip(false)}
-                >
-                  <HiInformationCircle className="h-5 w-5" />
-                </button>
-                {showTooltip && <CourseInfoTooltip />}
-              </div>
+              <div className={`text-xs font-semibold`} style={{ color: rollLabelColor }}>{rollLabel}</div>
             </div>
           </div>
           <div className="flex flex-col items-center w-full md:w-auto">
             <div className="flex items-center" style={{ gap: '24px' }}>
-              <label htmlFor="air-conditions" className="font-semibold text-white text-sm">Air conditions:</label>
+              <div className="relative">
+                <label 
+                  htmlFor="air-conditions" 
+                  className="font-semibold text-white text-sm cursor-help"
+                  style={{ borderBottom: '1px dotted #9ca3af' }}
+                  onMouseEnter={() => setShowAirTooltip(true)}
+                  onMouseLeave={() => setShowAirTooltip(false)}
+                  onFocus={() => setShowAirTooltip(true)}
+                  onBlur={() => setShowAirTooltip(false)}
+                  onTouchStart={() => setShowAirTooltip(true)}
+                  onTouchEnd={() => setShowAirTooltip(false)}
+                >
+                  Air conditions:
+                </label>
+                {showAirTooltip && <AirInfoTooltip />}
+              </div>
               <select
                 id="air-conditions"
                 className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
@@ -331,20 +350,6 @@ function App() {
                 ))}
               </select>
               <div className={`text-xs font-semibold`} style={{ color: airLabelColor }}>{airLabel}</div>
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-label="Air conditions info"
-                  className="text-white hover:text-blue-400 focus:outline-none"
-                  onMouseEnter={() => setShowAirTooltip(true)}
-                  onMouseLeave={() => setShowAirTooltip(false)}
-                  onFocus={() => setShowAirTooltip(true)}
-                  onBlur={() => setShowAirTooltip(false)}
-                >
-                  <HiInformationCircle className="h-5 w-5" />
-                </button>
-                {showAirTooltip && <AirInfoTooltip />}
-              </div>
             </div>
           </div>
         </div>
@@ -409,11 +414,12 @@ function App() {
                 layout="vertical"
                 margin={{ top: yAxisTopMargin, right: 40, left: 120, bottom: yAxisBottomMargin }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3"  vertical={true} horizontal={true} />
                 <XAxis
                   type="number"
                   tick={{ fontSize: 12, fill: '#fff' }}
                   domain={[0, 'dataMax + 30']}
+                  tickCount={10}
                   label={{ value: 'Distance (yards)', position: 'insideBottom', offset: -10, fill: '#fff', fontSize: 14 }}
                 />
                 <YAxis

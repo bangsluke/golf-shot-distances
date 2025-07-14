@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 export interface ClubData {
   Club: string;
   'Average Flat Carry (Yards)': string;
-  'Carry (Yards)': string;
+  'Average Roll (Yards)': string;
   'Overhit Risk (Yards)': string;
   'Average Total Distance Hit (Yards)': string;
   'Max Flat Carry (Yards)': string;
@@ -36,11 +36,11 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
       const initialForm = { ...club };
       
       // Calculate Carry if not present
-      if (!initialForm['Carry (Yards)']) {
-        const avgTotalDistance = parseFloat(initialForm['Average Total Distance Hit (Yards)'] || '0');
-        const avgFlatCarry = parseFloat(initialForm['Average Flat Carry (Yards)'] || '0');
-        initialForm['Carry (Yards)'] = (avgTotalDistance - avgFlatCarry).toFixed(0);
-      }
+          if (!initialForm['Average Roll (Yards)']) {
+      const avgTotalDistance = parseFloat(initialForm['Average Total Distance Hit (Yards)'] || '0');
+      const avgFlatCarry = parseFloat(initialForm['Average Flat Carry (Yards)'] || '0');
+      initialForm['Average Roll (Yards)'] = (avgTotalDistance - avgFlatCarry).toFixed(0);
+    }
       
       // Calculate Overhit Risk if not present
       if (!initialForm['Overhit Risk (Yards)']) {
@@ -60,12 +60,12 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
     const newForm = { ...form, [field]: value };
     
     // Calculate Carry: Average Total Distance Hit - Average Flat Carry
-    if (field === 'Average Total Distance Hit (Yards)' || field === 'Average Flat Carry (Yards)') {
-      const avgTotalDistance = parseFloat(newForm['Average Total Distance Hit (Yards)'] || '0');
-      const avgFlatCarry = parseFloat(newForm['Average Flat Carry (Yards)'] || '0');
-      const carry = avgTotalDistance - avgFlatCarry;
-      newForm['Carry (Yards)'] = carry.toFixed(0);
-    }
+            if (field === 'Average Total Distance Hit (Yards)' || field === 'Average Flat Carry (Yards)') {
+          const avgTotalDistance = parseFloat(newForm['Average Total Distance Hit (Yards)'] || '0');
+          const avgFlatCarry = parseFloat(newForm['Average Flat Carry (Yards)'] || '0');
+          const averageRoll = avgTotalDistance - avgFlatCarry;
+          newForm['Average Roll (Yards)'] = averageRoll.toFixed(0);
+        }
     
     // Calculate Overhit Risk: Max Total Distance Hit - Average Total Distance Hit
     if (field === 'Max Total Distance Hit (Yards)' || field === 'Average Total Distance Hit (Yards)') {
@@ -185,18 +185,33 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
             }}
             className="space-y-4"
           >
-            {[...distanceFields, lineField, 'Max Flat Carry (Yards)', 'Max Total Distance Hit (Yards)'].map(field => {
-              const isReadOnly = field === 'Carry (Yards)' || field === 'Overhit Risk (Yards)';
+            {/* Custom field order */}
+            {[
+              'Make',
+              'Model', 
+              'Average Total Distance Hit (Yards)',
+              'Average Flat Carry (Yards)',
+              'Max Flat Carry (Yards)',
+              'Max Total Distance Hit (Yards)',
+              'Average Roll (Yards)',
+              'Overhit Risk (Yards)',
+              'Comments',
+              'LastUpdated'
+            ].map(field => {
+              const isReadOnly = field === 'Average Roll (Yards)' || field === 'Overhit Risk (Yards)' || field === 'LastUpdated';
+              const isNumberField = field.includes('(Yards)') && field !== 'LastUpdated';
+              
               return (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-200 mb-1">
                     {field}
-                    {isReadOnly && <span className="text-xs text-gray-400 ml-2">(Calculated)</span>}
+                    {isReadOnly && field !== 'LastUpdated' && <span className="text-xs text-gray-400 ml-2">(Calculated)</span>}
+                    {field === 'LastUpdated' && <span className="text-xs text-gray-400 ml-2">(Auto-generated)</span>}
                   </label>
                   <input
-                    type="number"
+                    type={isNumberField ? "number" : "text"}
                     className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                    value={form[field] || ''}
+                    value={field === 'LastUpdated' ? (form[field] || 'Will be set on save') : (form[field] || '')}
                     onChange={e => handleFieldChange(field, e.target.value)}
                     readOnly={isReadOnly}
                     style={{
@@ -212,83 +227,6 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
                 </div>
               );
             })}
-            
-            {/* Make and Model fields */}
-            <div>
-              <label className="block text-sm font-medium text-gray-200 mb-1">Make</label>
-              <input
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                value={form['Make'] || ''}
-                onChange={e => handleFieldChange('Make', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #374151',
-                  backgroundColor: '#1f2937',
-                  color: 'white'
-                }}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-200 mb-1">Model</label>
-              <input
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                value={form['Model'] || ''}
-                onChange={e => handleFieldChange('Model', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #374151',
-                  backgroundColor: '#1f2937',
-                  color: 'white'
-                }}
-              />
-            </div>
-            
-            {/* LastUpdated field - read-only */}
-            <div>
-              <label className="block text-sm font-medium text-gray-200 mb-1">
-                LastUpdated
-                <span className="text-xs text-gray-400 ml-2">(Auto-generated)</span>
-              </label>
-              <input
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                value={form['LastUpdated'] || 'Will be set on save'}
-                readOnly
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #374151',
-                  backgroundColor: '#374151',
-                  color: '#9ca3af',
-                  cursor: 'not-allowed'
-                }}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-200 mb-1">Comments</label>
-              <input
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                value={form['Comments'] || ''}
-                onChange={e => handleFieldChange('Comments', e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '0.375rem',
-                  border: '1px solid #374151',
-                  backgroundColor: '#1f2937',
-                  color: 'white'
-                }}
-              />
-            </div>
             <div className="flex justify-end gap-2 mt-8">
               <button 
                 type="button" 

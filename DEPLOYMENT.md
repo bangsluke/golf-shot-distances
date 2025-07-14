@@ -36,7 +36,7 @@ GOOGLE_SPREADSHEET_ID=your-spreadsheet-id-here
 
 Your spreadsheet should have the following structure:
 
-| Club | Average Flat Carry (Yards) | Carry (Yards) | Overhit Risk (Yards) | Average Total Distance Hit (Yards) | ... |
+| Club | Average Flat Carry (Yards) | Average Roll (Yards) | Overhit Risk (Yards) | Average Total Distance Hit (Yards) | ... |
 |------|---------------------------|---------------|---------------------|-----------------------------------|-----|
 | Driver | 250 | 240 | 20 | 260 | ... |
 | 3 Wood | 220 | 210 | 15 | 230 | ... |

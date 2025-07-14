@@ -44,6 +44,7 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
               color: isHighlighted ? '#ffff00' : '#fff',
               fontWeight: isHighlighted ? 700 : 600,
               textDecoration: 'underline',
+              borderBottom: '1px dotted #9ca3af',
               cursor: 'pointer',
               position: 'relative',
               fontSize: isHighlighted ? 16 : 14,
@@ -60,6 +61,8 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
             }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
+            onTouchStart={() => setHovered(true)}
+            onTouchEnd={() => setHovered(false)}
           >
             {clubName}
           </span>
