@@ -37,45 +37,64 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
   return (
     <>
       <g transform={`translate(${x},${y})`}>
-        <foreignObject 
-          x={isMobile ? -90 : -120} 
-          y={-14} 
-          width={isMobile ? 90 : 120} 
-          height={28} 
-          style={{ overflow: 'visible' }}
-        >
-          <span
+        {isMobile ? (
+          <text
+            x={-10}
+            y={0}
+            textAnchor="end"
+            alignmentBaseline="middle"
+            fill={isHighlighted ? '#ffff00' : '#fff'}
+            fontWeight={isHighlighted ? 700 : 600}
+            fontSize={isHighlighted ? 13 : 11}
             style={{
-              display: 'block',
-              textAlign: 'right',
-              color: isHighlighted ? '#ffff00' : '#fff',
-              fontWeight: isHighlighted ? 700 : 600,
+              cursor: 'pointer',
               textDecoration: 'underline',
               borderBottom: '1px dotted #9ca3af',
-              cursor: 'pointer',
-              position: 'relative',
-              fontSize: isHighlighted ? (isMobile ? 13 : 16) : (isMobile ? 11 : 14),
-              lineHeight: isMobile ? '22px' : '28px',
-              width: '100%',
               pointerEvents: 'auto',
-              backgroundColor: isHighlighted ? 'rgba(255, 255, 0, 0.2)' : 'transparent',
-              padding: isHighlighted ? (isMobile ? '1px 2px' : '2px 4px') : '0',
-              borderRadius: isHighlighted ? '4px' : '0',
-              border: isHighlighted ? '2px solid #ffff00' : 'none',
             }}
-            onClick={() => {
-              if (club) onEdit(club);
-            }}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            onTouchStart={() => setHovered(true)}
-            onTouchEnd={() => setHovered(false)}
+            onClick={() => club && onEdit(club)}
           >
             {clubName}
-          </span>
-        </foreignObject>
+          </text>
+        ) : (
+          <foreignObject 
+            x={-120} 
+            y={-14} 
+            width={120} 
+            height={28} 
+            style={{ overflow: 'visible' }}
+          >
+            <span
+              style={{
+                display: 'block',
+                textAlign: 'right',
+                color: isHighlighted ? '#ffff00' : '#fff',
+                fontWeight: isHighlighted ? 700 : 600,
+                textDecoration: 'underline',
+                borderBottom: '1px dotted #9ca3af',
+                cursor: 'pointer',
+                position: 'relative',
+                fontSize: isHighlighted ? 16 : 14,
+                lineHeight: '28px',
+                width: '100%',
+                pointerEvents: 'auto',
+                backgroundColor: isHighlighted ? 'rgba(255, 255, 0, 0.2)' : 'transparent',
+                padding: isHighlighted ? '2px 4px' : '0',
+                borderRadius: isHighlighted ? '4px' : '0',
+                border: isHighlighted ? '2px solid #ffff00' : 'none',
+              }}
+              onClick={() => club && onEdit(club)}
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+              onTouchStart={() => setHovered(true)}
+              onTouchEnd={() => setHovered(false)}
+            >
+              {clubName}
+            </span>
+          </foreignObject>
+        )}
       </g>
-      {hovered && createPortal(
+      {!isMobile && hovered && createPortal(
         <div
           style={{
             position: 'fixed',

@@ -419,7 +419,7 @@ function App() {
   return (
     <div className="min-h-screen p-1 sm:p-2 md:p-6">
       <div className="golf-main w-full max-w-5xl mx-auto">
-        <h1 className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-4 md:mb-6 text-center text-blue-900 dark:text-white">
+        <h1 className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-4 md:mb-6 text-center text-white">
           Average Club Distances
         </h1>
         
