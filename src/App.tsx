@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
+  ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, Line, CartesianGrid
 } from 'recharts';
 import { HiInformationCircle } from 'react-icons/hi';
 import { ClubEditModal } from './components/ClubEditModal';
@@ -187,22 +187,7 @@ function App() {
     }
   });
 
-  // Log the data arrays for each series
-  console.log('=== SERIES DATA ARRAYS ===');
-  
-  // Log data for each bar series
-  DISTANCE_FIELDS.forEach(field => {
-    const dataArray = chartData.map(club => club[field]);
-    console.log(`${field}:`, dataArray);
-  });
-  
-  // Log data for the line series
-  const lineDataArray = chartData.map(club => club[LINE_FIELD]);
-  console.log(`${LINE_FIELD}:`, lineDataArray);
-  console.log('Line data type:', typeof lineDataArray[0]);
-  console.log('Line data sample:', lineDataArray.slice(0, 3));
-  
-  console.log('========================');
+
 
   // Debounced club recommendation function
   const debouncedRecommendClub = useCallback(
@@ -419,7 +404,7 @@ function App() {
           <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6" ref={chartRef}>
             <CustomLegend />
             <ResponsiveContainer width="100%" height={chartHeight}>
-              <BarChart
+              <ComposedChart
                 data={chartData}
                 layout="vertical"
                 margin={{ top: yAxisTopMargin, right: 40, left: 120, bottom: yAxisBottomMargin }}
@@ -438,8 +423,8 @@ function App() {
                   tickLine={false}
                   width={80}
                 />
-                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
-                                {DISTANCE_FIELDS.map((field) => (
+                                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
+                {DISTANCE_FIELDS.map((field) => (
                   <Bar
                     key={field}
                     dataKey={field}
@@ -459,17 +444,6 @@ function App() {
                     />
                   </Bar>
                 ))}
-                {/* Highlight overlay for recommended club */}
-                {highlightedClub && (
-                  <Bar
-                    dataKey="isHighlighted"
-                    stackId="highlight"
-                    fill="rgba(255, 255, 0, 0.2)"
-                    barSize={22}
-                    radius={0}
-                    isAnimationActive={false}
-                  />
-                )}
                 <Line
                   type="monotone"
                   dataKey={LINE_FIELD}
@@ -481,8 +455,21 @@ function App() {
                   animationDuration={600}
                   label={{ position: 'right', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
                   style={{ cursor: 'pointer' }}
+                  connectNulls={false}
                 />
-              </BarChart>
+                {/* Highlight overlay for recommended club */}
+                {highlightedClub && (
+                  <Bar
+                    dataKey="isHighlighted"
+                    stackId="highlight"
+                    fill="rgba(255, 255, 0, 0.2)"
+                    barSize={22}
+                    radius={0}
+                    isAnimationActive={false}
+                  />
+                )}
+
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         )}
