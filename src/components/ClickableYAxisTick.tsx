@@ -18,6 +18,7 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
   const clubName = payload.value;
   const club = clubs.find((c: ClubData) => c.Club === clubName);
   const isHighlighted = highlightedClub === clubName;
+  const isMobile = window.innerWidth < 768;
 
   useEffect(() => {
     if (hovered) {
@@ -26,17 +27,23 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
       if (chartElement) {
         const rect = chartElement.getBoundingClientRect();
         setTooltipPosition({
-          x: rect.left + x - 120, // Position to the left of the label
+          x: rect.left + x - (isMobile ? 60 : 120), // Adjust position for mobile
           y: rect.top + y - 14
         });
       }
     }
-  }, [hovered, x, y]);
+  }, [hovered, x, y, isMobile]);
 
   return (
     <>
       <g transform={`translate(${x},${y})`}>
-        <foreignObject x={-120} y={-14} width={120} height={28} style={{ overflow: 'visible' }}>
+        <foreignObject 
+          x={isMobile ? -60 : -120} 
+          y={-14} 
+          width={isMobile ? 60 : 120} 
+          height={28} 
+          style={{ overflow: 'visible' }}
+        >
           <span
             style={{
               display: 'block',
@@ -47,12 +54,12 @@ export function ClickableYAxisTick({ x, y, payload, clubs, onEdit, highlightedCl
               borderBottom: '1px dotted #9ca3af',
               cursor: 'pointer',
               position: 'relative',
-              fontSize: isHighlighted ? 16 : 14,
+              fontSize: isHighlighted ? (isMobile ? 12 : 16) : (isMobile ? 10 : 14),
               lineHeight: '28px',
               width: '100%',
               pointerEvents: 'auto',
               backgroundColor: isHighlighted ? 'rgba(255, 255, 0, 0.2)' : 'transparent',
-              padding: isHighlighted ? '2px 4px' : '0',
+              padding: isHighlighted ? (isMobile ? '1px 2px' : '2px 4px') : '0',
               borderRadius: isHighlighted ? '4px' : '0',
               border: isHighlighted ? '2px solid #ffff00' : 'none',
             }}

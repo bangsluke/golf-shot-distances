@@ -8,8 +8,10 @@ const AIR_CONDITION_INFO = [
 ];
 
 export function AirInfoTooltip() {
+  const isMobile = window.innerWidth < 768;
+  
   return (
-    <SharedTooltip className="" position="bottom" style={{ width: '350px' }}>
+    <SharedTooltip className="" position="bottom" style={{ width: isMobile ? '280px' : '350px' }}>
       <div className="font-bold mb-2">Air conditions:</div>
       <ul className="list-disc pl-4 space-y-1">
         {AIR_CONDITION_INFO.map(item => (

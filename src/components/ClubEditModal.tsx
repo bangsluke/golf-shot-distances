@@ -29,6 +29,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
   const [form, setForm] = useState<ClubData>(club || ({} as ClubData));
   const [showWarn, setShowWarn] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const isMobile = window.innerWidth < 768;
 
   useEffect(() => {
     if (club) {
@@ -127,11 +128,11 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
       
       {/* Modal */}
       <div 
-        className="flex items-center justify-center min-h-screen p-4"
+        className="flex items-center justify-center min-h-screen p-2 sm:p-4"
         style={{ zIndex: 999999 }}
       >
         <div 
-          className="relative w-full max-w-2xl mx-auto bg-gray-800 text-white rounded-lg shadow-lg border border-gray-600 p-8"
+          className={`relative w-full mx-auto bg-gray-800 text-white rounded-lg shadow-lg border border-gray-600 ${isMobile ? 'p-4' : 'p-8'} ${isMobile ? 'max-w-sm' : 'max-w-2xl'}`}
           style={{ 
             zIndex: 999999,
             position: 'relative',
@@ -140,20 +141,20 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
             borderRadius: '0.5rem',
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
             border: '1px solid #374151',
-            padding: '2rem'
+            padding: isMobile ? '1rem' : '2rem'
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-2xl font-bold focus:outline-none"
+            className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-400 hover:text-red-400 text-xl sm:text-2xl font-bold focus:outline-none"
             onClick={handleClose}
             aria-label="Close modal"
             style={{
               position: 'absolute',
-              top: '1rem',
-              right: '1rem',
+              top: isMobile ? '0.5rem' : '1rem',
+              right: isMobile ? '0.5rem' : '1rem',
               color: '#9ca3af',
-              fontSize: '1.5rem',
+              fontSize: isMobile ? '1.25rem' : '1.5rem',
               fontWeight: 'bold',
               background: 'none',
               border: 'none',
@@ -163,7 +164,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
             ×
           </button>
           
-          <h2 className="text-2xl font-bold mb-6 text-center">Edit {club['Club']}</h2>
+          <h2 className={`font-bold mb-4 sm:mb-6 text-center ${isMobile ? 'text-lg' : 'text-2xl'}`}>Edit {club['Club']}</h2>
           
           <form
             onSubmit={e => {
@@ -183,7 +184,7 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
               onSave(formWithTimestamp);
               setDirty(false);
             }}
-            className="space-y-4"
+            className="space-y-3 sm:space-y-4"
           >
             {/* Custom field order */}
             {[
@@ -203,56 +204,59 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
               
               return (
                 <div key={field}>
-                  <label className="block text-sm font-medium text-gray-200 mb-1">
+                  <label className={`block font-medium text-gray-200 mb-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                     {field}
                     {isReadOnly && field !== 'LastUpdated' && <span className="text-xs text-gray-400 ml-2">(Calculated)</span>}
                     {field === 'LastUpdated' && <span className="text-xs text-gray-400 ml-2">(Auto-generated)</span>}
                   </label>
                   <input
                     type={isNumberField ? "number" : "text"}
-                    className="mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                    className={`mt-1 block w-full rounded-md border-gray-700 bg-gray-800 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 ${isMobile ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}`}
                     value={field === 'LastUpdated' ? (form[field] || 'Will be set on save') : (form[field] || '')}
                     onChange={e => handleFieldChange(field, e.target.value)}
                     readOnly={isReadOnly}
                     style={{
                       width: '100%',
-                      padding: '0.5rem 0.75rem',
+                      padding: isMobile ? '0.125rem 0.5rem' : '0.25rem 0.75rem',
                       borderRadius: '0.375rem',
                       border: '1px solid #374151',
                       backgroundColor: isReadOnly ? '#374151' : '#1f2937',
                       color: isReadOnly ? '#9ca3af' : 'white',
-                      cursor: isReadOnly ? 'not-allowed' : 'text'
+                      cursor: isReadOnly ? 'not-allowed' : 'text',
+                      fontSize: isMobile ? '0.75rem' : '0.875rem'
                     }}
                   />
                 </div>
               );
             })}
-            <div className="flex justify-end gap-2 mt-8">
+            <div className="flex justify-end gap-2 mt-6 sm:mt-8">
               <button 
                 type="button" 
                 onClick={handleClose} 
-                className="px-5 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600"
+                className={`rounded bg-gray-700 text-gray-200 hover:bg-gray-600 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-5 py-1 text-sm'}`}
                 style={{
-                  padding: '0.5rem 1.25rem',
+                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1.25rem',
                   borderRadius: '0.375rem',
                   backgroundColor: '#374151',
                   color: '#d1d5db',
                   border: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem'
                 }}
               >
                 Close
               </button>
               <button 
                 type="submit" 
-                className="px-5 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                className={`rounded bg-blue-600 text-white hover:bg-blue-700 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-5 py-1 text-sm'}`}
                 style={{
-                  padding: '0.5rem 1.25rem',
+                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1.25rem',
                   borderRadius: '0.375rem',
                   backgroundColor: '#2563eb',
                   color: 'white',
                   border: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem'
                 }}
               >
                 Save
@@ -280,45 +284,47 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
           }}
         >
           <div 
-            className="bg-gray-800 text-white rounded-lg shadow-lg border border-gray-600 p-8 max-w-sm w-full"
+            className={`bg-gray-800 text-white rounded-lg shadow-lg border border-gray-600 ${isMobile ? 'p-4' : 'p-8'} ${isMobile ? 'max-w-xs' : 'max-w-sm'} w-full mx-4`}
             style={{
               backgroundColor: '#1f2937',
               color: 'white',
               borderRadius: '0.5rem',
               boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
               border: '1px solid #374151',
-              padding: '2rem',
-              maxWidth: '24rem',
+              padding: isMobile ? '1rem' : '2rem',
+              maxWidth: isMobile ? '20rem' : '24rem',
               width: '100%'
             }}
           >
-            <div className="font-bold text-lg mb-4">Unsaved changes</div>
-            <div className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</div>
+            <div className={`font-bold mb-4 ${isMobile ? 'text-base' : 'text-lg'}`}>Unsaved changes</div>
+            <div className={`mb-6 ${isMobile ? 'text-sm' : 'text-base'}`}>You have unsaved changes. Are you sure you want to close without saving?</div>
             <div className="flex justify-end gap-2">
               <button 
-                className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600" 
+                className={`rounded bg-gray-700 text-gray-200 hover:bg-gray-600 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-4 py-1 text-sm'}`}
                 onClick={() => setShowWarn(false)}
                 style={{
-                  padding: '0.5rem 1rem',
+                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1rem',
                   borderRadius: '0.375rem',
                   backgroundColor: '#374151',
                   color: '#d1d5db',
                   border: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem'
                 }}
               >
                 Cancel
               </button>
               <button 
-                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700" 
+                className={`rounded bg-red-600 text-white hover:bg-red-700 ${isMobile ? 'px-3 py-0.5 text-xs' : 'px-4 py-1 text-sm'}`}
                 onClick={handleConfirmClose}
                 style={{
-                  padding: '0.5rem 1rem',
+                  padding: isMobile ? '0.125rem 0.75rem' : '0.25rem 1rem',
                   borderRadius: '0.375rem',
                   backgroundColor: '#dc2626',
                   color: 'white',
                   border: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: isMobile ? '0.75rem' : '0.875rem'
                 }}
               >
                 Discard changes

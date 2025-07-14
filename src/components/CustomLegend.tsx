@@ -3,6 +3,7 @@ import { SharedTooltip } from './SharedTooltip';
 
 export function CustomLegend() {
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const isMobile = window.innerWidth < 768;
   const items = [
     { 
       color: '#22c55e', 
@@ -26,19 +27,18 @@ export function CustomLegend() {
     },
   ];
   return (
-    <div className="flex justify-center pb-4">
-      <div className="border border-gray-600 bg-gray-800 rounded-lg px-6 py-4 min-w-[260px]" style={{ padding: '8px' }}>
-        <div className="text-xs font-bold uppercase tracking-wide text-white mb-3 text-center">Legend</div>
-        <div className="flex flex-wrap justify-center" style={{ gap: '12px' }}>
+    <div className="flex justify-center pb-1 sm:pb-2 md:pb-4">
+      <div className={`border border-gray-600 bg-gray-800 rounded-lg px-2 sm:px-3 md:px-6 py-1 sm:py-2 md:py-4 ${isMobile ? 'min-w-[180px]' : 'min-w-[260px]'}`}>
+        <div className="text-xs font-bold uppercase tracking-wide text-white mb-1 sm:mb-2 md:mb-3 text-center">Legend</div>
+        <div className={`flex flex-wrap justify-center ${isMobile ? 'gap-1' : 'gap-3'}`}>
           {items.map(item => (
             <div key={item.label} className="relative">
               <span
-                className={`flex items-center gap-2 px-12 py-4 rounded-full text-white font-medium shadow-sm border border-gray-300 transition-colors duration-200 cursor-help hover:brightness-110`}
+                className={`flex items-center gap-1 sm:gap-2 px-1 sm:px-2 md:px-3 py-1 sm:py-1 md:py-2 rounded-full text-white font-medium shadow-sm border border-gray-300 transition-colors duration-200 cursor-help hover:brightness-110`}
                 style={{ 
                   minWidth: 0, 
-                  padding: '8px', 
                   backgroundColor: `${item.color}`, 
-                  fontSize: '0.7rem'
+                  fontSize: isMobile ? '0.55rem' : '0.7rem'
                 }}
                 onMouseEnter={() => setActiveTooltip(item.label)}
                 onMouseLeave={() => setActiveTooltip(null)}
@@ -52,7 +52,7 @@ export function CustomLegend() {
                 </span>
               </span>
               {activeTooltip === item.label && (
-                <SharedTooltip position="top" style={{ width: '300px' }}>
+                <SharedTooltip position="top" style={{ width: isMobile ? '250px' : '300px' }}>
                   <div className="font-bold mb-2">{item.label}</div>
                   <div className="text-sm">{item.tooltip}</div>
                 </SharedTooltip>
