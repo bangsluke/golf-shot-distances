@@ -2,6 +2,11 @@ import { useState } from 'react';
 import axios from 'axios';
 
 export const ApiDebugger = () => {
+  // Only show in development mode
+  if (import.meta.env.PROD) {
+    return null;
+  }
+
   const [testResult, setTestResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
