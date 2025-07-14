@@ -106,7 +106,7 @@ function App() {
     }
   };
 
-  const chartHeight = 500;
+  const chartHeight = 500; // Back to original height
   const yAxisTopMargin = 30; // matches chart margin.top
   const yAxisBottomMargin = 30; // matches chart margin.bottom
 
@@ -284,159 +284,177 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="golf-main max-w-5xl mx-auto">
-        <h1 className="text-xl md:text-xl font-bold mb-6 text-center text-blue-900 dark:text-white">
+    <div className="min-h-screen p-1 sm:p-2 md:p-6">
+      <div className="golf-main w-full max-w-5xl mx-auto">
+        <h1 className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-4 md:mb-6 text-center text-blue-900 dark:text-white">
           Average Club Distances
         </h1>
-        <div className="flex flex-col md:flex-row md:justify-center gap-8 mb-8 items-start w-full">
-          <div className="flex flex-col items-center w-full md:w-auto">
-            <div className="flex items-center" style={{ gap: '24px' }}>
-              <div className="relative">
-                <label 
-                  htmlFor="course-conditions" 
-                  className="font-semibold text-white text-sm cursor-help"
-                  style={{ borderBottom: '1px dotted #9ca3af' }}
-                  onMouseEnter={() => setShowTooltip(true)}
-                  onMouseLeave={() => setShowTooltip(false)}
-                  onFocus={() => setShowTooltip(true)}
-                  onBlur={() => setShowTooltip(false)}
-                  onTouchStart={() => setShowTooltip(true)}
-                  onTouchEnd={() => setShowTooltip(false)}
-                >
-                  Course conditions:
-                </label>
-                {showTooltip && <CourseInfoTooltip />}
-              </div>
-              <select
-                id="course-conditions"
-                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-                value={courseCondition}
-                onChange={e => setCourseCondition(e.target.value)}
-              >
-                {COURSE_CONDITIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <div className={`text-xs font-semibold`} style={{ color: rollLabelColor }}>{rollLabel}</div>
-            </div>
-          </div>
-          <div className="flex flex-col items-center w-full md:w-auto">
-            <div className="flex items-center" style={{ gap: '24px' }}>
-              <div className="relative">
-                <label 
-                  htmlFor="air-conditions" 
-                  className="font-semibold text-white text-sm cursor-help"
-                  style={{ borderBottom: '1px dotted #9ca3af' }}
-                  onMouseEnter={() => setShowAirTooltip(true)}
-                  onMouseLeave={() => setShowAirTooltip(false)}
-                  onFocus={() => setShowAirTooltip(true)}
-                  onBlur={() => setShowAirTooltip(false)}
-                  onTouchStart={() => setShowAirTooltip(true)}
-                  onTouchEnd={() => setShowAirTooltip(false)}
-                >
-                  Air conditions:
-                </label>
-                {showAirTooltip && <AirInfoTooltip />}
-              </div>
-              <select
-                id="air-conditions"
-                className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
-                value={airCondition}
-                onChange={e => setAirCondition(e.target.value)}
-              >
-                {AIR_CONDITIONS.map((opt: { label: string; value: string }) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <div className={`text-xs font-semibold`} style={{ color: airLabelColor }}>{airLabel}</div>
-            </div>
-          </div>
-        </div>
         
-        {/* Distance to Hole Input */}
-        <div className="flex flex-col md:flex-row md:justify-center gap-4 mb-6 items-center">
-          <div className="flex items-center gap-3">
-            <label htmlFor="distance-to-hole" className="font-semibold text-white text-sm">
-              Distance to hole (yards):
-            </label>
-            <input
-              id="distance-to-hole"
-              type="number"
-              value={distanceToHole}
-              onChange={(e) => {
-                setDistanceToHole(e.target.value);
-                debouncedRecommendClub(e.target.value);
-              }}
-              className="rounded-md border border-gray-400 bg-gray-800 text-white px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 w-24"
-              placeholder="0"
-              min="0"
-            />
-            <button
-              onClick={() => {
-                setDistanceToHole('');
-                setRecommendedClub(null);
-                setHighlightedClub(null);
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
-              title="Clear distance and highlighting"
-            >
-              Clear
-            </button>
+        {/* Mobile-optimized controls layout */}
+        <div className="flex flex-col gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6 md:mb-8">
+          {/* Course and Air Conditions - Stack vertically on mobile */}
+          <div className="flex flex-col sm:flex-row sm:justify-center gap-2 sm:gap-4 md:gap-8 items-start w-full">
+            <div className="flex flex-col items-center w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 md:gap-6">
+                <div className="relative">
+                  <label 
+                    htmlFor="course-conditions" 
+                    className="font-semibold text-white text-xs cursor-help"
+                    style={{ borderBottom: '1px dotted #9ca3af' }}
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                    onFocus={() => setShowTooltip(true)}
+                    onBlur={() => setShowTooltip(false)}
+                    onTouchStart={() => setShowTooltip(true)}
+                    onTouchEnd={() => setShowTooltip(false)}
+                  >
+                    Course conditions:
+                  </label>
+                  {showTooltip && <CourseInfoTooltip />}
+                </div>
+                <select
+                  id="course-conditions"
+                  className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500"
+                  value={courseCondition}
+                  onChange={e => setCourseCondition(e.target.value)}
+                >
+                  {COURSE_CONDITIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <div className="text-xs font-semibold" style={{ color: rollLabelColor }}>{rollLabel}</div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 md:gap-6">
+                <div className="relative">
+                  <label 
+                    htmlFor="air-conditions" 
+                    className="font-semibold text-white text-xs cursor-help"
+                    style={{ borderBottom: '1px dotted #9ca3af' }}
+                    onMouseEnter={() => setShowAirTooltip(true)}
+                    onMouseLeave={() => setShowAirTooltip(false)}
+                    onFocus={() => setShowAirTooltip(true)}
+                    onBlur={() => setShowAirTooltip(false)}
+                    onTouchStart={() => setShowAirTooltip(true)}
+                    onTouchEnd={() => setShowAirTooltip(false)}
+                  >
+                    Air conditions:
+                  </label>
+                  {showAirTooltip && <AirInfoTooltip />}
+                </div>
+                <select
+                  id="air-conditions"
+                  className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500"
+                  value={airCondition}
+                  onChange={e => setAirCondition(e.target.value)}
+                >
+                  {AIR_CONDITIONS.map((opt: { label: string; value: string }) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <div className="text-xs font-semibold" style={{ color: airLabelColor }}>{airLabel}</div>
+              </div>
+            </div>
           </div>
           
-          {recommendedClub && (
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-white">Recommended:</span>
-              <span className="font-semibold text-blue-400">{recommendedClub.club}</span>
-              <span className="text-white">({recommendedClub.distance} yards)</span>
-              <span 
-                className={`font-semibold ${
-                  recommendedClub.difference > 0 
-                    ? 'text-red-400' 
-                    : 'text-green-400'
-                }`}
-              >
-                {recommendedClub.difference > 0 ? '+' : ''}{recommendedClub.difference} yards
-              </span>
+          {/* Distance to Hole Input - Mobile optimized */}
+          <div className="flex flex-col sm:flex-row sm:justify-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-4 md:mb-6 items-center">
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 md:gap-3">
+              <label htmlFor="distance-to-hole" className="font-semibold text-white text-xs">
+                Distance to hole (yards):
+              </label>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <input
+                  id="distance-to-hole"
+                  type="number"
+                  value={distanceToHole}
+                  onChange={(e) => {
+                    setDistanceToHole(e.target.value);
+                    debouncedRecommendClub(e.target.value);
+                  }}
+                  className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500 w-20 sm:w-24"
+                  placeholder="0"
+                  min="0"
+                />
+                <button
+                  onClick={() => {
+                    setDistanceToHole('');
+                    setRecommendedClub(null);
+                    setHighlightedClub(null);
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 rounded text-xs font-medium transition-colors"
+                  title="Clear distance and highlighting"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
-          )}
+            
+            {recommendedClub && (
+              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-xs">
+                <span className="text-white">Recommended:</span>
+                <span className="font-semibold text-blue-400">{recommendedClub.club}</span>
+                <span className="text-white">({recommendedClub.distance} yards)</span>
+                <span 
+                  className={`font-semibold ${
+                    recommendedClub.difference > 0 
+                      ? 'text-red-400' 
+                      : 'text-green-400'
+                  }`}
+                >
+                  {recommendedClub.difference > 0 ? '+' : ''}{recommendedClub.difference} yards
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         
         {loading ? (
-          <div className="text-center text-lg text-gray-600 dark:text-gray-300">Loading...</div>
+          <div className="text-center text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
-          <div className="relative bg-gray-800 rounded-lg shadow-lg p-6" ref={chartRef}>
+          <div className="relative bg-gray-800 rounded-lg shadow-lg p-1 sm:p-2 md:p-6 w-full" ref={chartRef}>
             <CustomLegend />
             <ResponsiveContainer width="100%" height={chartHeight}>
               <ComposedChart
                 data={chartData}
                 layout="vertical"
-                margin={{ top: yAxisTopMargin, right: 40, left: 120, bottom: yAxisBottomMargin }}
+                margin={{ 
+                  top: yAxisTopMargin, 
+                  right: window.innerWidth < 768 ? 10 : 40, 
+                  left: window.innerWidth < 768 ? 60 : 120, 
+                  bottom: yAxisBottomMargin 
+                }}
               >
                 <CartesianGrid strokeDasharray="3"  vertical={true} horizontal={true} />
                 <XAxis
                   type="number"
-                  tick={{ fontSize: 12, fill: '#fff' }}
+                  tick={{ fontSize: window.innerWidth < 768 ? 10 : 12, fill: '#fff' }}
                   domain={[0, 'dataMax + 30']}
-                  tickCount={10}
-                  label={{ value: 'Distance (yards)', position: 'insideBottom', offset: -10, fill: '#fff', fontSize: 14 }}
+                  tickCount={window.innerWidth < 768 ? 6 : 10}
+                  label={{ 
+                    value: 'Distance (yards)', 
+                    position: 'insideBottom', 
+                    offset: window.innerWidth < 768 ? -5 : -10, 
+                    fill: '#fff', 
+                    fontSize: window.innerWidth < 768 ? 12 : 14 
+                  }}
                 />
                 <YAxis
                   type="category"
                   dataKey="Club"
                   tick={(props) => <ClickableYAxisTick {...props} clubs={clubs} onEdit={handleEdit} highlightedClub={highlightedClub} />}
                   tickLine={false}
-                  width={80}
+                  width={window.innerWidth < 768 ? 50 : 80}
                 />
-                                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
+                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
                 {DISTANCE_FIELDS.map((field) => (
                   <Bar
                     key={field}
                     dataKey={field}
                     stackId="a"
                     fill={BAR_COLORS[field]}
-                    barSize={22}
+                    barSize={window.innerWidth < 768 ? 18 : 22}
                     radius={0}
                     isAnimationActive={true}
                     animationDuration={600}
@@ -445,7 +463,11 @@ function App() {
                     <LabelList
                       dataKey={field}
                       position="right"
-                      style={{ fontSize: 12, fill: BAR_COLORS[field] === '#ef4444' ? '#ef4444' : '#fff', fontWeight: BAR_COLORS[field] === '#ef4444' ? 700 : 500 }}
+                      style={{ 
+                        fontSize: window.innerWidth < 768 ? 10 : 12, 
+                        fill: BAR_COLORS[field] === '#ef4444' ? '#ef4444' : '#fff', 
+                        fontWeight: BAR_COLORS[field] === '#ef4444' ? 700 : 500 
+                      }}
                       formatter={(label: React.ReactNode) => (typeof label === 'string' && label !== '0' ? label : '')}
                     />
                   </Bar>
@@ -454,12 +476,17 @@ function App() {
                   type="monotone"
                   dataKey={LINE_FIELD}
                   stroke={LINE_COLOR}
-                  strokeWidth={3}
-                  dot={{ r: 5, fill: LINE_COLOR, stroke: '#fff', strokeWidth: 2 }}
-                  activeDot={{ r: 7 }}
+                  strokeWidth={window.innerWidth < 768 ? 2 : 3}
+                  dot={{ r: window.innerWidth < 768 ? 3 : 5, fill: LINE_COLOR, stroke: '#fff', strokeWidth: 2 }}
+                  activeDot={{ r: window.innerWidth < 768 ? 5 : 7 }}
                   isAnimationActive={true}
                   animationDuration={600}
-                  label={{ position: 'right', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
+                  label={{ 
+                    position: 'right', 
+                    fontSize: window.innerWidth < 768 ? 11 : 13, 
+                    fill: LINE_COLOR, 
+                    fontWeight: 700 
+                  }}
                   style={{ cursor: 'pointer' }}
                   connectNulls={false}
                 />
@@ -469,7 +496,7 @@ function App() {
                     dataKey="isHighlighted"
                     stackId="highlight"
                     fill="rgba(255, 255, 0, 0.2)"
-                    barSize={22}
+                    barSize={window.innerWidth < 768 ? 18 : 22}
                     radius={0}
                     isAnimationActive={false}
                   />

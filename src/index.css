@@ -118,6 +118,96 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Mobile-specific improvements */
+@media (max-width: 767px) {
+  /* Improve touch targets */
+  button, select, input {
+    min-height: 44px; /* iOS recommended minimum touch target */
+  }
+  
+  /* Better spacing for mobile */
+  .golf-main {
+    padding: 0.25rem;
+    width: 100%;
+  }
+  
+  /* Ensure chart is readable on mobile and uses full width */
+  .recharts-wrapper {
+    min-height: 350px;
+    width: 100% !important;
+  }
+  
+  /* Ensure chart container uses full width */
+  .recharts-responsive-container {
+    width: 100% !important;
+  }
+  
+  /* Improve text readability on mobile */
+  .recharts-cartesian-axis-tick text {
+    font-size: 10px !important;
+  }
+  
+  /* Better modal positioning on mobile */
+  [role="dialog"] {
+    padding: 0.5rem;
+  }
+  
+  /* Improve form inputs on mobile */
+  input, select {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+  
+  /* Reduce dropdown option text size */
+  select option {
+    font-size: 12px !important;
+  }
+  
+  /* Better spacing for mobile controls */
+  .flex.flex-col.gap-4 {
+    gap: 0.5rem;
+  }
+  
+  /* Ensure tooltips don't overflow on mobile */
+  .custom-tooltip {
+    max-width: 90vw;
+    word-wrap: break-word;
+  }
+  
+  /* Reduce spacing between elements on mobile */
+  .gap-2 {
+    gap: 0.5rem;
+  }
+  
+  .mb-3 {
+    margin-bottom: 0.75rem;
+  }
+  
+  .mb-2 {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Global dropdown text size reduction */
+select option {
+  font-size: 12px !important;
+}
+
+/* Ensure dropdown text matches the select element */
+select {
+  font-size: 12px !important;
+}
+
+/* Landscape mobile improvements */
+@media (max-width: 767px) and (orientation: landscape) {
+  .golf-main {
+    padding: 0.25rem;
+  }
+  
+  .recharts-wrapper {
+    min-height: 300px;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
