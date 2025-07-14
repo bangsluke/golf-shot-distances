@@ -123,44 +123,75 @@ function App() {
     airLabelColor = '#9ca3af';
   }
 
-  // Adjust Average Flat Carry and Overhit Risk based on air condition
+  // Calculate Carry and Overhit Risk, then adjust based on conditions
   const chartData = clubs.map(club => {
     try {
-      const carryRaw = parseFloat(club['Carry (Yards)']);
-      const avgFlatCarryRaw = parseFloat(club['Average Flat Carry (Yards)']);
-      const overhitRiskRaw = parseFloat(club['Overhit Risk (Yards)']);
+      // Parse values, handling empty strings
+      const avgTotalDistanceStr = club['Average Total Distance Hit (Yards)'] || '';
+      const avgFlatCarryStr = club['Average Flat Carry (Yards)'] || '';
+      const maxTotalDistanceStr = club['Max Total Distance Hit (Yards)'] || '';
+      
+      const avgTotalDistance = avgTotalDistanceStr ? parseFloat(avgTotalDistanceStr) : 0;
+      const avgFlatCarryRaw = avgFlatCarryStr ? parseFloat(avgFlatCarryStr) : 0;
+      const maxTotalDistance = maxTotalDistanceStr ? parseFloat(maxTotalDistanceStr) : 0;
+      
+      // Only calculate if we have valid data
+      let carry = 0;
+      let overhitRisk = 0;
+      let avgFlatCarry = avgFlatCarryRaw;
+      
+      if (avgTotalDistance > 0 && avgFlatCarryRaw > 0) {
+        carry = (avgTotalDistance - avgFlatCarryRaw) * carryFactor;
+      }
+      
+      if (maxTotalDistance > 0 && avgTotalDistance > 0) {
+        overhitRisk = maxTotalDistance - avgTotalDistance;
+      }
 
-      const carry = (isNaN(carryRaw) ? 0 : carryRaw) * carryFactor;
-      let avgFlatCarry = isNaN(avgFlatCarryRaw) ? 0 : avgFlatCarryRaw;
-      let overhitRisk = isNaN(overhitRiskRaw) ? 0 : overhitRiskRaw;
-
-      if (airCondition === 'rainy') {
+      // Apply air condition adjustments
+      if (airCondition === 'rainy' && avgFlatCarry > 0) {
         avgFlatCarry = avgFlatCarry * 0.9;
       }
-      if (airCondition === 'windy') {
+      if (airCondition === 'windy' && overhitRisk > 0) {
         overhitRisk = overhitRisk * 1.2;
       }
 
-      // Use the value from the sheet for Average Total Distance Hit (Yards)
       return {
         ...club,
-        'Carry (Yards)': carry.toFixed(0),
-        'Average Flat Carry (Yards)': avgFlatCarry.toFixed(0),
-        'Overhit Risk (Yards)': overhitRisk.toFixed(0),
-        'Average Total Distance Hit (Yards)': club['Average Total Distance Hit (Yards)'],
+        'Carry (Yards)': carry,
+        'Average Flat Carry (Yards)': avgFlatCarry,
+        'Overhit Risk (Yards)': overhitRisk,
+        'Average Total Distance Hit (Yards)': avgTotalDistance,
       };
     } catch (error) {
       console.error('Error processing club data:', club, error);
       // Return a safe fallback
       return {
         ...club,
-        'Carry (Yards)': '0',
-        'Average Flat Carry (Yards)': '0',
-        'Overhit Risk (Yards)': '0',
-        'Average Total Distance Hit (Yards)': '0',
+        'Carry (Yards)': 0,
+        'Average Flat Carry (Yards)': 0,
+        'Overhit Risk (Yards)': 0,
+        'Average Total Distance Hit (Yards)': 0,
       };
     }
   });
+
+  // Log the data arrays for each series
+  console.log('=== SERIES DATA ARRAYS ===');
+  
+  // Log data for each bar series
+  DISTANCE_FIELDS.forEach(field => {
+    const dataArray = chartData.map(club => club[field]);
+    console.log(`${field}:`, dataArray);
+  });
+  
+  // Log data for the line series
+  const lineDataArray = chartData.map(club => club[LINE_FIELD]);
+  console.log(`${LINE_FIELD}:`, lineDataArray);
+  console.log('Line data type:', typeof lineDataArray[0]);
+  console.log('Line data sample:', lineDataArray.slice(0, 3));
+  
+  console.log('========================');
 
   return (
     <div className="min-h-screen p-6">
@@ -275,7 +306,7 @@ function App() {
                       formatter={(label: React.ReactNode) => (typeof label === 'string' && label !== '0' ? label : '')}
                     />
                   </Bar>
-                ))}
+                                  ))}
                 <Line
                   type="monotone"
                   dataKey={LINE_FIELD}
@@ -285,7 +316,7 @@ function App() {
                   activeDot={{ r: 7 }}
                   isAnimationActive={true}
                   animationDuration={600}
-                  label={{ position: 'top', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
+                  label={{ position: 'right', fontSize: 13, fill: LINE_COLOR, fontWeight: 700 }}
                   style={{ cursor: 'pointer' }}
                 />
               </BarChart>

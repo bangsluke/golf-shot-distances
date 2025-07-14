@@ -31,7 +31,28 @@ export function ClubEditModal({ open, onClose, club, onSave, distanceFields, lin
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
-    setForm(club || ({} as ClubData));
+    if (club) {
+      // Initialize calculated fields if they don't exist
+      const initialForm = { ...club };
+      
+      // Calculate Carry if not present
+      if (!initialForm['Carry (Yards)']) {
+        const avgTotalDistance = parseFloat(initialForm['Average Total Distance Hit (Yards)'] || '0');
+        const avgFlatCarry = parseFloat(initialForm['Average Flat Carry (Yards)'] || '0');
+        initialForm['Carry (Yards)'] = (avgTotalDistance - avgFlatCarry).toFixed(0);
+      }
+      
+      // Calculate Overhit Risk if not present
+      if (!initialForm['Overhit Risk (Yards)']) {
+        const maxTotalDistance = parseFloat(initialForm['Max Total Distance Hit (Yards)'] || '0');
+        const avgTotalDistance = parseFloat(initialForm['Average Total Distance Hit (Yards)'] || '0');
+        initialForm['Overhit Risk (Yards)'] = (maxTotalDistance - avgTotalDistance).toFixed(0);
+      }
+      
+      setForm(initialForm);
+    } else {
+      setForm({} as ClubData);
+    }
     setDirty(false);
   }, [club]);
 
