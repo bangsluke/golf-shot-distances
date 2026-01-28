@@ -25,6 +25,8 @@ A React-based web application that displays and manages golf club shot distances
     - [Step 7: Deploy to Netlify](#step-7-deploy-to-netlify)
     - [Step 8: Customize Your App](#step-8-customize-your-app)
   - [Project Structure](#project-structure)
+  - [PWA and Add to Home Screen (iOS)](#pwa-and-add-to-home-screen-ios)
+    - [PWA icons](#pwa-icons)
   - [Troubleshooting](#troubleshooting)
     - [Common Issues](#common-issues)
     - [Getting Help](#getting-help)
@@ -331,6 +333,22 @@ golf-shot-distances/
 ├── .env                   # Environment variables (not in Git)
 └── .gitignore            # Git ignore rules
 ```
+
+> [Back to Table of Contents](#table-of-contents)
+
+## PWA and Add to Home Screen (iOS)
+
+The site is configured as a PWA and can be added to the iOS home screen. The manifest and service worker are generated at build time. For a proper home screen icon and install experience, add the following icon files to the `public/` folder:
+
+### PWA icons
+
+| File | Size | Purpose |
+|------|------|---------|
+| `pwa-192x192.png` | 192×192 px | Web app manifest |
+| `pwa-512x512.png` | 512×512 px | Web app manifest |
+| `apple-touch-icon.png` | 180×180 px | iOS home screen icon |
+
+Generate these from a single high-resolution PNG or SVG using [PWA Assets Generator](https://vite-pwa-org.netlify.app/assets-generator/) or [PWA Builder Image Generator](https://www.pwabuilder.com/imageGenerator), then place the files in `public/`. Until these exist, the app still builds; the home screen may show a default icon.
 
 > [Back to Table of Contents](#table-of-contents)
 
