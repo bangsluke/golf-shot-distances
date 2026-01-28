@@ -66,24 +66,24 @@ function App() {
     difference: number;
   } | null>(null);
   const [highlightedClub, setHighlightedClub] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
 
   const fetchClubs = async () => {
     setLoading(true);
+    setApiError(null);
     try {
       const res = await axios.get(API_URL);
       setClubs(res.data);
-      
-      // Check if any clubs need reordering
       const needsReordering = res.data.some((club: ClubData) => !club['ClubOrder'] || isNaN(parseInt(club['ClubOrder'])));
       if (needsReordering) {
         await reorderClubs();
       }
     } catch (error) {
-      console.error('Failed to fetch clubs:', error);
-      // Set empty array to prevent crashes, but you might want to show an error message
       setClubs([]);
-      // You could add a state for error handling here
+      const isNetwork = axios.isAxiosError(error) && (error.code === 'ERR_NETWORK' || error.message === 'Network Error');
+      setApiError(isNetwork ? 'Backend not available. Start the API or use production.' : 'Failed to load clubs.');
+      if (!isNetwork) console.error('Failed to fetch clubs:', error);
     } finally {
       setLoading(false);
     }
@@ -418,6 +418,15 @@ function App() {
 
   return (
     <div className="min-h-screen p-1 sm:p-2 md:p-6">
+      {apiError && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="mb-2 rounded bg-amber-900/80 text-amber-100 text-center text-sm py-2 px-3"
+        >
+          {apiError}
+        </div>
+      )}
       <div className="golf-main w-full max-w-5xl mx-auto" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
         <h1 className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-4 md:mb-6 text-center text-white">
           Average Club Distances
