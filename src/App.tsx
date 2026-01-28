@@ -68,6 +68,8 @@ function App() {
   const [highlightedClub, setHighlightedClub] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  const courseLabelRef = useRef<HTMLDivElement>(null);
+  const airLabelRef = useRef<HTMLDivElement>(null);
 
   const fetchClubs = async () => {
     setLoading(true);
@@ -428,16 +430,18 @@ function App() {
         </div>
       )}
       <div className="golf-main w-full max-w-5xl mx-auto" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
-        <h1 className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-4 md:mb-6 text-center text-white">
-          Average Club Distances
-        </h1>
-        
+        <header className="flex items-center justify-center gap-2 mb-2 sm:mb-4 md:mb-6">
+          <img src="/Golf-Shot-Distances.png" alt="" className="h-8 w-auto sm:h-10" />
+          <h1 className="text-base sm:text-lg md:text-2xl font-bold text-center text-white m-0">
+            Average Club Distances
+          </h1>
+        </header>
         {/* Mobile-optimized controls layout */}
         <div className="flex flex-col gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6 md:mb-8">
           {/* Course conditions (left) and Air conditions (right) - two columns, same vertical height */}
           <div className="flex flex-row justify-center gap-4 sm:gap-6 md:gap-8 items-stretch w-full">
             <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center sm:items-start">
-              <div className="relative">
+              <div ref={courseLabelRef} className="relative mb-4 sm:mb-3">
                 <label 
                   htmlFor="course-conditions" 
                   className="font-semibold text-white text-xs cursor-help"
@@ -451,7 +455,7 @@ function App() {
                 >
                   Course conditions:
                 </label>
-                {showTooltip && <CourseInfoTooltip />}
+                {showTooltip && <CourseInfoTooltip anchorRef={courseLabelRef} />}
               </div>
               <select
                 id="course-conditions"
@@ -463,10 +467,10 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className="text-xs font-semibold" style={{ color: rollLabelColor }}>{rollLabel}</div>
+              <div className="text-xs font-semibold mt-2" style={{ color: rollLabelColor }}>{rollLabel}</div>
             </div>
             <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center sm:items-start">
-              <div className="relative">
+              <div ref={airLabelRef} className="relative mb-4 sm:mb-3">
                 <label 
                   htmlFor="air-conditions" 
                   className="font-semibold text-white text-xs cursor-help"
@@ -480,7 +484,7 @@ function App() {
                 >
                   Air conditions:
                 </label>
-                {showAirTooltip && <AirInfoTooltip />}
+                {showAirTooltip && <AirInfoTooltip anchorRef={airLabelRef} />}
               </div>
               <select
                 id="air-conditions"
@@ -492,12 +496,12 @@ function App() {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <div className="text-xs font-semibold" style={{ color: airLabelColor }}>{airLabel}</div>
+              <div className="text-xs font-semibold mt-2" style={{ color: airLabelColor }}>{airLabel}</div>
             </div>
           </div>
           
           {/* Distance to Hole Input - Mobile optimized */}
-          <div className="flex flex-col sm:flex-row sm:justify-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-4 md:mb-6 items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-4 md:mb-6 mt-4 items-center">
             <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 md:gap-3">
               <label htmlFor="distance-to-hole" className="font-semibold text-white text-xs">
                 Distance to hole (yards):
@@ -560,7 +564,7 @@ function App() {
                 margin={{ 
                   top: yAxisTopMargin, 
                   right: window.innerWidth < 768 ? 10 : 40, 
-                  left: window.innerWidth < 768 ? 50 : 100, 
+                  left: window.innerWidth < 768 ? 40 : 100, 
                   bottom: yAxisBottomMargin 
                 }}
               >
