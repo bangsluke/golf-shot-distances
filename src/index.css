@@ -222,7 +222,12 @@ select {
 }
 
 @media (max-width: 767px) {
-  .distance-hole-input,
+  .distance-hole-input {
+    min-height: 28px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    line-height: 1.2 !important;
+  }
   .distance-hole-clear {
     min-height: 28px !important;
     padding-top: 2px !important;
