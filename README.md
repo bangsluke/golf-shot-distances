@@ -9,28 +9,27 @@
 A React-based web application that displays and manages golf club shot distances. The app connects to a Google Sheets backend to store and retrieve club data, making it easy to track your golf performance across different clubs.
 
 ## Table of Contents
-- [Golf Shot Distances](#golf-shot-distances)
-  - [Table of Contents](#table-of-contents)
-  - [Quick Start](#quick-start)
-    - [Development Mode](#development-mode)
-    - [Production Mode](#production-mode)
-  - [Complete Setup Guide](#complete-setup-guide)
-    - [Prerequisites](#prerequisites)
-    - [Step 1: Clone the Repository](#step-1-clone-the-repository)
-    - [Step 2: Set Up Google Sheets](#step-2-set-up-google-sheets)
-    - [Step 3: Configure Google Cloud API](#step-3-configure-google-cloud-api)
-    - [Step 4: Set Up Environment Variables](#step-4-set-up-environment-variables)
-    - [Step 5: Test Your Setup](#step-5-test-your-setup)
-    - [Step 6: Deploy to GitHub](#step-6-deploy-to-github)
-    - [Step 7: Deploy to Netlify](#step-7-deploy-to-netlify)
-    - [Step 8: Customize Your App](#step-8-customize-your-app)
-  - [Project Structure](#project-structure)
-  - [PWA and Add to Home Screen (iOS)](#pwa-and-add-to-home-screen-ios)
-    - [PWA icons](#pwa-icons)
-  - [Troubleshooting](#troubleshooting)
-    - [Common Issues](#common-issues)
-    - [Getting Help](#getting-help)
-    - [Security Notes](#security-notes)
+- [Table of Contents](#table-of-contents)
+- [Quick Start](#quick-start)
+  - [Development Mode](#development-mode)
+  - [Production Mode](#production-mode)
+- [Complete Setup Guide](#complete-setup-guide)
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Clone the Repository](#step-1-clone-the-repository)
+  - [Step 2: Set Up Google Sheets](#step-2-set-up-google-sheets)
+  - [Step 3: Configure Google Cloud API](#step-3-configure-google-cloud-api)
+  - [Step 4: Set Up Environment Variables](#step-4-set-up-environment-variables)
+  - [Step 5: Test Your Setup](#step-5-test-your-setup)
+  - [Step 6: Deploy to GitHub](#step-6-deploy-to-github)
+  - [Step 7: Deploy to Netlify](#step-7-deploy-to-netlify)
+  - [Step 8: Customize Your App](#step-8-customize-your-app)
+- [Project Structure](#project-structure)
+- [PWA and Add to Home Screen (iOS)](#pwa-and-add-to-home-screen-ios)
+  - [PWA icons](#pwa-icons)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues](#common-issues)
+  - [Getting Help](#getting-help)
+  - [Security Notes](#security-notes)
 
 ## Quick Start
 
@@ -346,7 +345,7 @@ The site is configured as a PWA and can be added to the iOS home screen. The man
 |------|------|---------|
 | `pwa-192x192.png` | 192×192 px | Web app manifest |
 | `pwa-512x512.png` | 512×512 px | Web app manifest |
-| `apple-touch-icon.png` | 180×180 px | iOS home screen icon |
+| `Golf-Shot-Distances.png` | 180×180 px recommended | iOS home screen icon |
 
 Generate these from a single high-resolution PNG or SVG using [PWA Assets Generator](https://vite-pwa-org.netlify.app/assets-generator/) or [PWA Builder Image Generator](https://www.pwabuilder.com/imageGenerator), then place the files in `public/`. Until these exist, the app still builds; the home screen may show a default icon.
 

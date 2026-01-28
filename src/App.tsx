@@ -434,69 +434,65 @@ function App() {
         
         {/* Mobile-optimized controls layout */}
         <div className="flex flex-col gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6 md:mb-8">
-          {/* Course and Air Conditions - Stack vertically on mobile */}
-          <div className="flex flex-col sm:flex-row sm:justify-center gap-2 sm:gap-4 md:gap-8 items-start w-full">
-            <div className="flex flex-col items-center w-full sm:w-auto">
-              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 md:gap-6">
-                <div className="relative">
-                  <label 
-                    htmlFor="course-conditions" 
-                    className="font-semibold text-white text-xs cursor-help"
-                    style={{ borderBottom: '1px dotted #9ca3af' }}
-                    onMouseEnter={() => setShowTooltip(true)}
-                    onMouseLeave={() => setShowTooltip(false)}
-                    onFocus={() => setShowTooltip(true)}
-                    onBlur={() => setShowTooltip(false)}
-                    onTouchStart={() => setShowTooltip(true)}
-                    onTouchEnd={() => setShowTooltip(false)}
-                  >
-                    Course conditions:
-                  </label>
-                  {showTooltip && <CourseInfoTooltip />}
-                </div>
-                <select
-                  id="course-conditions"
-                  className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500"
-                  value={courseCondition}
-                  onChange={e => setCourseCondition(e.target.value)}
+          {/* Course conditions (left) and Air conditions (right) - two columns, same vertical height */}
+          <div className="flex flex-row justify-center gap-4 sm:gap-6 md:gap-8 items-stretch w-full">
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center sm:items-start">
+              <div className="relative">
+                <label 
+                  htmlFor="course-conditions" 
+                  className="font-semibold text-white text-xs cursor-help"
+                  style={{ borderBottom: '1px dotted #9ca3af' }}
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  onFocus={() => setShowTooltip(true)}
+                  onBlur={() => setShowTooltip(false)}
+                  onTouchStart={() => setShowTooltip(true)}
+                  onTouchEnd={() => setShowTooltip(false)}
                 >
-                  {COURSE_CONDITIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <div className="text-xs font-semibold" style={{ color: rollLabelColor }}>{rollLabel}</div>
+                  Course conditions:
+                </label>
+                {showTooltip && <CourseInfoTooltip />}
               </div>
+              <select
+                id="course-conditions"
+                className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
+                value={courseCondition}
+                onChange={e => setCourseCondition(e.target.value)}
+              >
+                {COURSE_CONDITIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <div className="text-xs font-semibold" style={{ color: rollLabelColor }}>{rollLabel}</div>
             </div>
-            <div className="flex flex-col items-center w-full sm:w-auto">
-              <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 md:gap-6">
-                <div className="relative">
-                  <label 
-                    htmlFor="air-conditions" 
-                    className="font-semibold text-white text-xs cursor-help"
-                    style={{ borderBottom: '1px dotted #9ca3af' }}
-                    onMouseEnter={() => setShowAirTooltip(true)}
-                    onMouseLeave={() => setShowAirTooltip(false)}
-                    onFocus={() => setShowAirTooltip(true)}
-                    onBlur={() => setShowAirTooltip(false)}
-                    onTouchStart={() => setShowAirTooltip(true)}
-                    onTouchEnd={() => setShowAirTooltip(false)}
-                  >
-                    Air conditions:
-                  </label>
-                  {showAirTooltip && <AirInfoTooltip />}
-                </div>
-                <select
-                  id="air-conditions"
-                  className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500"
-                  value={airCondition}
-                  onChange={e => setAirCondition(e.target.value)}
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center sm:items-start">
+              <div className="relative">
+                <label 
+                  htmlFor="air-conditions" 
+                  className="font-semibold text-white text-xs cursor-help"
+                  style={{ borderBottom: '1px dotted #9ca3af' }}
+                  onMouseEnter={() => setShowAirTooltip(true)}
+                  onMouseLeave={() => setShowAirTooltip(false)}
+                  onFocus={() => setShowAirTooltip(true)}
+                  onBlur={() => setShowAirTooltip(false)}
+                  onTouchStart={() => setShowAirTooltip(true)}
+                  onTouchEnd={() => setShowAirTooltip(false)}
                 >
-                  {AIR_CONDITIONS.map((opt: { label: string; value: string }) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <div className="text-xs font-semibold" style={{ color: airLabelColor }}>{airLabel}</div>
+                  Air conditions:
+                </label>
+                {showAirTooltip && <AirInfoTooltip />}
               </div>
+              <select
+                id="air-conditions"
+                className="rounded-md border border-gray-400 bg-gray-800 text-white px-2 sm:px-3 py-0.5 sm:py-1 md:py-2 text-xs focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
+                value={airCondition}
+                onChange={e => setAirCondition(e.target.value)}
+              >
+                {AIR_CONDITIONS.map((opt: { label: string; value: string }) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <div className="text-xs font-semibold" style={{ color: airLabelColor }}>{airLabel}</div>
             </div>
           </div>
           
@@ -564,7 +560,7 @@ function App() {
                 margin={{ 
                   top: yAxisTopMargin, 
                   right: window.innerWidth < 768 ? 10 : 40, 
-                  left: window.innerWidth < 768 ? 60 : 120, 
+                  left: window.innerWidth < 768 ? 50 : 100, 
                   bottom: yAxisBottomMargin 
                 }}
               >
@@ -650,7 +646,7 @@ function App() {
         )}
         
         {/* Action Buttons */}
-        <div className="flex justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+        <div className="flex justify-center gap-3 sm:gap-4 mt-4 sm:mt-6 pb-4 sm:pb-6 md:pb-8">
           <button
             onClick={reorderClubs}
             className={`text-white px-3 sm:px-4 py-1 sm:py-2 rounded text-xs sm:text-sm font-medium transition-colors bg-gray-600 cursor-not-allowed`}
