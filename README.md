@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.imgur.com/3C8EKbF.png" alt="Golf Shot Distances Logo" width="200"/>
+  <img src="https://bangsluke-assets.netlify.app/images/project-logos/Golf-Shot-Distances.png" alt="Golf Shot Distances Logo" width="200"/>
 </p>
 
 # Golf Shot Distances
