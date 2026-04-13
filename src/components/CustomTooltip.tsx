@@ -8,6 +8,7 @@ interface CustomTooltipProps {
   distanceFields: string[];
   lineField: string;
   onTooltipTap?: () => void;
+  centeredInViewport?: boolean;
 }
 
 export function CustomTooltip({
@@ -15,7 +16,8 @@ export function CustomTooltip({
   payload,
   distanceFields,
   lineField,
-  onTooltipTap
+  onTooltipTap,
+  centeredInViewport = false
 }: CustomTooltipProps) {
   if (active && payload && payload.length) {
     const club = payload[0].payload;
@@ -31,6 +33,7 @@ export function CustomTooltip({
         className="relative"
         onClick={handleTooltipTap}
         onTouchStart={handleTooltipTap}
+        centeredInViewport={centeredInViewport}
       >
         <div className="font-bold mb-2">{club['Club']}</div>
         {[...distanceFields, lineField, 'Max Flat Carry (Yards)', 'Max Total Distance Hit (Yards)'].map(field => (
