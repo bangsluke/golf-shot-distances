@@ -9,6 +9,8 @@ interface SharedTooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right';
   show?: boolean;
   style?: React.CSSProperties;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onTouchStart?: React.TouchEventHandler<HTMLDivElement>;
   /** On mobile, position relative to trigger and clamp to viewport */
   viewportSafe?: boolean;
   /** Trigger rect when viewportSafe – tooltip is positioned below and clamped to viewport */
@@ -21,6 +23,8 @@ export function SharedTooltip({
   position = 'top',
   show = true,
   style = {},
+  onClick,
+  onTouchStart,
   viewportSafe = false,
   anchorRect = null
 }: SharedTooltipProps) {
@@ -62,7 +66,11 @@ export function SharedTooltip({
       ${useAnchorPosition ? '' : `absolute ${positionClasses[position]}`}
       custom-tooltip bg-gray-800 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-600
       ${className}
-    `} style={useAnchorPosition ? { ...style, ...fixedStyle } : style}>
+    `}
+      style={useAnchorPosition ? { ...style, ...fixedStyle } : style}
+      onClick={onClick}
+      onTouchStart={onTouchStart}
+    >
       {children}
     </div>
   );

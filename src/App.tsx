@@ -319,6 +319,7 @@ function App() {
         payload={tooltipPayload}
         distanceFields={DISTANCE_FIELDS as unknown as string[]}
         lineField={LINE_FIELD}
+        onTooltipTap={isMobileViewport ? clearMobilePinnedTooltip : undefined}
       />
     );
   };
