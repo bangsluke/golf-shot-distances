@@ -49,6 +49,21 @@ const AIR_CONDITIONS = [
   { label: 'Windy conditions', value: 'windy' },
 ];
 
+interface TooltipPayloadEntry {
+  payload?: ClubData;
+}
+
+interface ChartClickState {
+  activePayload?: TooltipPayloadEntry[];
+  chartX?: number;
+  chartY?: number;
+}
+
+interface TooltipRendererProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+}
+
 function App() {
   const [clubs, setClubs] = useState<ClubData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +82,8 @@ function App() {
   } | null>(null);
   const [highlightedClub, setHighlightedClub] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [mobilePinnedTooltipClub, setMobilePinnedTooltipClub] = useState<ClubData | null>(null);
+  const [mobilePinnedTooltipPosition, setMobilePinnedTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const courseLabelRef = useRef<HTMLDivElement>(null);
   const airLabelRef = useRef<HTMLDivElement>(null);
@@ -234,6 +251,7 @@ function App() {
   const baseClubCount = 13;
   const currentClubCount = clubs.length;
   const chartHeight = Math.max(300, Math.min(800, baseHeight * (currentClubCount / baseClubCount)));
+  const isMobileViewport = window.innerWidth < 768;
   
   const yAxisTopMargin = 30; // matches chart margin.top
   const yAxisBottomMargin = 30; // matches chart margin.bottom
@@ -259,6 +277,51 @@ function App() {
     airLabel = 'No adjustment';
     airLabelColor = '#9ca3af';
   }
+
+  const clearMobilePinnedTooltip = () => {
+    setMobilePinnedTooltipClub(null);
+    setMobilePinnedTooltipPosition(null);
+  };
+
+  const handleMobileChartTap = (state?: ChartClickState) => {
+    if (!isMobileViewport) return;
+
+    if (mobilePinnedTooltipClub) {
+      clearMobilePinnedTooltip();
+      return;
+    }
+
+    const tappedClub = state?.activePayload?.[0]?.payload;
+    if (!tappedClub) return;
+
+    setMobilePinnedTooltipClub(tappedClub);
+    if (typeof state?.chartX === 'number' && typeof state?.chartY === 'number') {
+      setMobilePinnedTooltipPosition({ x: state.chartX, y: state.chartY });
+      return;
+    }
+    setMobilePinnedTooltipPosition(null);
+  };
+
+  const renderChartTooltip = (tooltipProps: TooltipRendererProps) => {
+    const desktopTooltipPayload = tooltipProps.payload?.filter(
+      (entry): entry is { payload: ClubData } => Boolean(entry.payload)
+    );
+    const tooltipActive = isMobileViewport
+      ? Boolean(mobilePinnedTooltipClub)
+      : Boolean(tooltipProps.active && desktopTooltipPayload && desktopTooltipPayload.length);
+    const tooltipPayload: { payload: ClubData }[] | undefined = isMobileViewport
+      ? (mobilePinnedTooltipClub ? [{ payload: mobilePinnedTooltipClub }] : undefined)
+      : (desktopTooltipPayload && desktopTooltipPayload.length ? desktopTooltipPayload : undefined);
+
+    return (
+      <CustomTooltip
+        active={tooltipActive}
+        payload={tooltipPayload}
+        distanceFields={DISTANCE_FIELDS as unknown as string[]}
+        lineField={LINE_FIELD}
+      />
+    );
+  };
 
   // Calculate Carry and Overhit Risk, then adjust based on conditions
   const chartData = clubs
@@ -440,7 +503,7 @@ function App() {
         <div className="flex flex-col gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6 md:mb-8">
           {/* Course conditions (left) and Air conditions (right) - two columns, same vertical height */}
           <div className="flex flex-row justify-center gap-4 sm:gap-6 md:gap-8 items-stretch w-full">
-            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center sm:items-start">
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center">
               <div ref={courseLabelRef} className="relative mb-4 sm:mb-3">
                 <label 
                   htmlFor="course-conditions" 
@@ -555,12 +618,13 @@ function App() {
         {loading ? (
           <div className="text-center text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300">Loading...</div>
         ) : (
-          <div className="relative bg-gray-800 rounded-lg p-1 sm:p-2 md:p-6 w-full" ref={chartRef}>
+          <div className="relative bg-gray-800 rounded-lg p-1 sm:p-2 md:p-6 w-full md:w-1/2 md:mx-auto" ref={chartRef}>
             <CustomLegend />
             <ResponsiveContainer width="100%" height={chartHeight}>
               <ComposedChart
                 data={chartData}
                 layout="vertical"
+                onClick={handleMobileChartTap}
                 margin={{ 
                   top: yAxisTopMargin, 
                   right: window.innerWidth < 768 ? 10 : 40, 
@@ -589,7 +653,10 @@ function App() {
                   tickLine={false}
                   width={window.innerWidth < 768 ? 50 : 80}
                 />
-                <Tooltip content={<CustomTooltip distanceFields={DISTANCE_FIELDS as unknown as string[]} lineField={LINE_FIELD} />} />
+                <Tooltip
+                  content={renderChartTooltip}
+                  position={isMobileViewport ? mobilePinnedTooltipPosition ?? undefined : undefined}
+                />
                 {DISTANCE_FIELDS.map((field) => (
                   <Bar
                     key={field}
