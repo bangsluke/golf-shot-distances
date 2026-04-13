@@ -735,6 +735,9 @@ function App() {
             Add New Club
           </button>
         </div>
+        <div className="text-center text-white text-xs pb-3 opacity-90">
+          v{APP_VERSION}
+        </div>
         
         <ClubEditModal
           open={modalOpen}
@@ -745,9 +748,6 @@ function App() {
           distanceFields={DISTANCE_FIELDS as unknown as string[]}
           lineField={LINE_FIELD}
         />
-      </div>
-      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 text-white text-xs opacity-90 z-40 pointer-events-none">
-        v{APP_VERSION}
       </div>
     </div>
   );
