@@ -11,6 +11,7 @@ interface SharedTooltipProps {
   style?: React.CSSProperties;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   onTouchStart?: React.TouchEventHandler<HTMLDivElement>;
+  centeredInViewport?: boolean;
   /** On mobile, position relative to trigger and clamp to viewport */
   viewportSafe?: boolean;
   /** Trigger rect when viewportSafe – tooltip is positioned below and clamped to viewport */
@@ -25,6 +26,7 @@ export function SharedTooltip({
   style = {},
   onClick,
   onTouchStart,
+  centeredInViewport = false,
   viewportSafe = false,
   anchorRect = null
 }: SharedTooltipProps) {
@@ -38,6 +40,7 @@ export function SharedTooltip({
   };
 
   const useAnchorPosition = viewportSafe && anchorRect;
+  const useCenteredPosition = centeredInViewport;
   const fixedStyle: React.CSSProperties = useAnchorPosition ? (() => {
     const gap = 8;
     const w = Math.min(MOBILE_TOOLTIP_WIDTH, window.innerWidth - TOOLTIP_PADDING * 2);
@@ -60,14 +63,23 @@ export function SharedTooltip({
       overflowY: 'auto' as const
     };
   })() : {};
+  const centeredStyle: React.CSSProperties = useCenteredPosition ? {
+    position: 'fixed',
+    left: '50%',
+    top: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: Math.min(MOBILE_TOOLTIP_WIDTH, window.innerWidth - TOOLTIP_PADDING * 2),
+    maxHeight: window.innerHeight - TOOLTIP_PADDING * 2,
+    overflowY: 'auto'
+  } : {};
 
   return (
     <div className={`
-      ${useAnchorPosition ? '' : `absolute ${positionClasses[position]}`}
+      ${(useAnchorPosition || useCenteredPosition) ? '' : `absolute ${positionClasses[position]}`}
       custom-tooltip bg-gray-800 text-white text-xs rounded-lg shadow-lg p-4 z-50 border border-gray-600
       ${className}
     `}
-      style={useAnchorPosition ? { ...style, ...fixedStyle } : style}
+      style={useCenteredPosition ? { ...style, ...centeredStyle } : useAnchorPosition ? { ...style, ...fixedStyle } : style}
       onClick={onClick}
       onTouchStart={onTouchStart}
     >

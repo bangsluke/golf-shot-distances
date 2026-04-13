@@ -11,6 +11,7 @@ import { ClickableYAxisTick } from './components/ClickableYAxisTick';
 import { CustomLegend } from './components/CustomLegend';
 import { CourseInfoTooltip } from './components/CourseInfoTooltip';
 import { AirInfoTooltip } from './components/AirInfoTooltip';
+import packageJson from '../package.json';
 
 import './index.css';
 
@@ -26,6 +27,7 @@ const BAR_COLORS = {
 };
 
 const LINE_COLOR = '#22c55e'; // green-500
+const APP_VERSION = packageJson.version;
 
 const DISTANCE_FIELDS = [
   'Average Flat Carry (Yards)',
@@ -320,6 +322,7 @@ function App() {
         distanceFields={DISTANCE_FIELDS as unknown as string[]}
         lineField={LINE_FIELD}
         onTooltipTap={isMobileViewport ? clearMobilePinnedTooltip : undefined}
+        centeredInViewport={isMobileViewport}
       />
     );
   };
@@ -654,10 +657,7 @@ function App() {
                   tickLine={false}
                   width={window.innerWidth < 768 ? 50 : 80}
                 />
-                <Tooltip
-                  content={renderChartTooltip}
-                  position={isMobileViewport ? mobilePinnedTooltipPosition ?? undefined : undefined}
-                />
+                <Tooltip content={renderChartTooltip} />
                 {DISTANCE_FIELDS.map((field) => (
                   <Bar
                     key={field}
@@ -745,6 +745,9 @@ function App() {
           distanceFields={DISTANCE_FIELDS as unknown as string[]}
           lineField={LINE_FIELD}
         />
+      </div>
+      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 text-white text-xs opacity-90 z-40 pointer-events-none">
+        v{APP_VERSION}
       </div>
     </div>
   );
