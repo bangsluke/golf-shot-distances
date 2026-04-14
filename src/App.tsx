@@ -498,7 +498,7 @@ function App() {
       )}
       <div className="golf-main w-full max-w-5xl mx-auto" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
         <header className="flex items-center justify-center gap-2 mb-2 sm:mb-4 md:mb-6">
-          <img src="/Golf-Shot-Distances.png" alt="" className="h-8 w-auto sm:h-10" />
+          <img src="/Golf-Shot-Distances-Logo.png" alt="" className="h-8 w-auto sm:h-10" />
           <h1 className="text-base sm:text-lg md:text-2xl font-bold text-center text-white m-0">
             Average Club Distances
           </h1>

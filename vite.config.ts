@@ -9,7 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: { enabled: true },
-      includeAssets: ['favicon.ico', 'Golf-Shot-Distances.png'],
+      includeAssets: ['favicon.ico', 'Golf-Shot-Distances-Logo.png'],
       manifest: {
         name: 'Golf Shot Distances',
         short_name: 'Golf Shot Distances',

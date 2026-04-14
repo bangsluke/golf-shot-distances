@@ -1,5 +1,525 @@
 <p align="center">
-  <img src="https://bangsluke-assets.netlify.app/images/project-logos/Golf-Shot-Distances.png" alt="Golf Shot Distances Logo" width="200"/>
+  <img src="./public/Golf-Shot-Distances-Logo.png" alt="Golf Shot Distances Logo" height="110"/>
+</p>
+
+<h1 align="center">Golf Shot Distances</h1>
+
+<p align="center">
+  <strong>Interactive golf distance planning app</strong> for tracking clubs, visualizing yardage breakdowns, and recommending club selection based on conditions.
+</p>
+
+<p align="center">
+  <a href="https://golf-shot-distances.netlify.app">🌐 Live Demo</a> •
+  <a href="https://github.com/bangsluke/golf-shot-distances">💻 GitHub Repository</a> •
+  <a href="#key-features">✨ Features</a> •
+  <a href="#tech-stack">🛠️ Tech Stack</a> •
+  <a href="#architecture">🏗️ Architecture</a> •
+  <a href="#quick-start">📚 Quick Start</a>
+</p>
+
+<p align="center">
+  <a href="https://app.netlify.com/projects/golf-shot-distances/deploys" style="text-decoration: none;">
+    <img src="https://api.netlify.com/api/v1/badges/6e5166de-72ae-4ef3-9810-be1900038089/deploy-status" alt="Netlify Status" />
+  </a>
+  <img src="https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-7-646cff?logo=vite" alt="Vite 7" />
+  <img src="https://img.shields.io/badge/Google%20Sheets-API-34a853?logo=googlesheets" alt="Google Sheets API" />
+  <img src="https://img.shields.io/badge/PWA-enabled-purple?logo=pwa" alt="PWA enabled" />
+</p>
+
+<p align="center">
+  <img src="./public/Golf-Shot-Distances.png" alt="Golf Shot Distances Screenshot" height="520"/>
+</p>
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Project Overview](#project-overview)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+  - [Development Start](#development-start)
+  - [Production Build and Preview](#production-build-and-preview)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Google Sheets Setup](#google-sheets-setup)
+- [API Endpoints](#api-endpoints)
+  - [Production API (`netlify/functions/api.js`)](#production-api-netlifyfunctionsapijs)
+  - [Local Development API (`backend/index.js`)](#local-development-api-backendindexjs)
+  - [Mock/Test API (`netlify/functions/api-simple.js`)](#mocktest-api-netlifyfunctionsapi-simplejs)
+- [Project Structure](#project-structure)
+- [PWA Notes](#pwa-notes)
+- [Troubleshooting](#troubleshooting)
+- [Security Notes](#security-notes)
+
+## Project Overview
+
+Golf Shot Distances is a React + TypeScript app for managing golf club data and making faster distance decisions on the course.
+
+The app pulls club data from Google Sheets, calculates and visualizes distance components (flat carry, roll, and overhit risk), and recommends a club for a given yardage while accounting for selected course and air conditions.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Key Features
+
+- **Distance visualization**: Vertical composed chart with stacked distance bars and total-distance trend line.
+- **Condition-aware planning**: Adjustments for dry/wet course conditions and normal/rainy/windy air conditions.
+- **Club recommendation**: Suggests the nearest club for entered distance and highlights it in the chart.
+- **Interactive editing**: Add, edit, and delete clubs using an in-app modal with calculated-field support.
+- **Mobile-friendly behavior**: Touch-friendly controls, responsive chart sizing, and mobile pinned tooltips.
+- **Legend and tooltips**: Rich metric explanations for carry, roll, total distance, and overhit risk.
+- **PWA-ready build**: Manifest and service worker configured through `vite-plugin-pwa`.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Tech Stack
+
+**Frontend**
+- **React 18** with functional components and hooks
+- **TypeScript** for static typing
+- **Vite** for dev/build tooling
+- **Recharts** for chart rendering
+- **Tailwind CSS** for utility-first styling
+- **Axios** for API requests
+
+**Backend and Data**
+- **Google Sheets API** as the persistent data store
+- **Netlify Functions** for production serverless API routes
+- **Express backend** (local) for full CRUD development workflow
+
+**Deployment**
+- **Netlify** for hosting, redirects, and serverless function runtime
+- **Vite PWA Plugin** for installable app experience
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Architecture
+
+The app uses a simple frontend + API + Google Sheets architecture:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                  Frontend (React + Vite)                │
+│  Chart UI + club editor + recommendation logic          │
+└───────────────────────────┬──────────────────────────────┘
+                            │ HTTP (/api/clubs)
+                            ▼
+┌──────────────────────────────────────────────────────────┐
+│                    API Layer                            │
+│  - Netlify function (production)                        │
+│  - Express server on localhost:4000 (local dev)         │
+└───────────────────────────┬──────────────────────────────┘
+                            │ Google Sheets API
+                            ▼
+┌──────────────────────────────────────────────────────────┐
+│                   Google Sheets                          │
+│  Club rows (distance fields, metadata, comments, order) │
+└──────────────────────────────────────────────────────────┘
+```
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Quick Start
+
+### Development Start
+
+1. Install frontend dependencies:
+   ```bash
+   npm install
+   ```
+2. Install local backend dependencies:
+   ```bash
+   cd backend
+   npm install
+   cd ..
+   ```
+3. Start the local backend API (terminal 1):
+   ```bash
+   cd backend
+   node index.js
+   ```
+4. Start the frontend (terminal 2):
+   ```bash
+   npm run dev
+   ```
+5. Open the app at `http://localhost:5173`.
+
+The frontend expects local API requests at `http://localhost:4000/api/clubs` during development.
+
+### Production Build and Preview
+
+```bash
+npm install
+npm run build
+npm run preview
+```
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Configuration
+
+### Environment Variables
+
+For **Netlify function** usage (`netlify/functions/api.js`), set:
+
+```env
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+GOOGLE_SPREADSHEET_ID=your_google_sheet_id
+GOOGLE_SHEET_TAB=your_sheet_tab_name
+```
+
+For **local backend** usage (`backend/index.js`), create `backend/.env` from `backend/.env.example`:
+
+```env
+GOOGLE_SERVICE_ACCOUNT_KEY_PATH=./service-account.json
+GOOGLE_SHEET_ID=your_google_sheet_id_here
+GOOGLE_SHEET_TAB=your_google_sheet_name
+PORT=4000
+```
+
+### Google Sheets Setup
+
+1. Create a Google Sheet and use row 1 as headers.
+2. Add club columns used by the app (club info, distance values, comments, order).
+3. Create a Google Cloud service account and enable Google Sheets API.
+4. Share the sheet with the service account email.
+5. Provide credentials through environment variables (Netlify) or a local key file path (backend).
+
+> [Back to Table of Contents](#table-of-contents)
+
+## API Endpoints
+
+### Production API (`netlify/functions/api.js`)
+
+- `GET /api/clubs` - Fetch all clubs from Google Sheets.
+- `PUT /api/clubs/:clubName` - Update an existing club row.
+
+### Local Development API (`backend/index.js`)
+
+- `GET /api/clubs` - Fetch clubs.
+- `POST /api/clubs` - Create a new club.
+- `PUT /api/clubs/:club` - Update a club.
+- `DELETE /api/clubs/:club` - Delete a club.
+
+### Mock/Test API (`netlify/functions/api-simple.js`)
+
+- `GET /api-simple/clubs` - Returns mock club data for connectivity checks.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Project Structure
+
+```text
+golf-shot-distances/
+├── src/
+│   ├── App.tsx
+│   ├── components/
+│   └── index.css
+├── public/
+│   ├── Golf-Shot-Distances-Logo.png
+│   └── Golf-Shot-Distances.png
+├── netlify/
+│   └── functions/
+├── backend/
+│   ├── index.js
+│   └── .env.example
+├── vite.config.ts
+├── netlify.toml
+└── package.json
+```
+
+> [Back to Table of Contents](#table-of-contents)
+
+## PWA Notes
+
+This project uses `vite-plugin-pwa` with:
+- Auto-update service worker registration
+- Manifest with standalone display mode
+- `pwa-192x192.png` and `pwa-512x512.png` icon entries
+- Included static assets such as `Golf-Shot-Distances-Logo.png`
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Troubleshooting
+
+- **App shows "Backend not available" in development**: confirm local API is running on port `4000`.
+- **Google Sheets errors**: verify service account access, spreadsheet ID, and tab name.
+- **Netlify 500 errors**: validate `GOOGLE_SERVICE_ACCOUNT_KEY`, `GOOGLE_SPREADSHEET_ID`, and `GOOGLE_SHEET_TAB`.
+- **Build issues**: re-run `npm install`, then `npm run build`, and check linting with `npm run lint`.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Security Notes
+
+- Never commit service-account credentials or `.env` files.
+- Keep Google service account keys in secure environment variables.
+- Rotate keys if you suspect exposure.
+- Restrict service account permissions to only what is needed.
+
+> [Back to Table of Contents](#table-of-contents)
+<!-- Legacy README content retained for reference and hidden from rendered output.
+<p align="center">
+  <img src="./public/Golf-Shot-Distances-Logo.png" alt="Golf Shot Distances Logo" height="110"/>
+</p>
+
+<h1 align="center">Golf Shot Distances</h1>
+
+<p align="center">
+  <strong>Interactive golf distance planning app</strong> for tracking clubs, visualizing yardage breakdowns, and recommending club selection based on conditions.
+</p>
+
+<p align="center">
+  <a href="https://golf-shot-distances.netlify.app">🌐 Live Demo</a> •
+  <a href="https://github.com/bangsluke/golf-shot-distances">💻 GitHub Repository</a> •
+  <a href="#key-features">✨ Features</a> •
+  <a href="#tech-stack">🛠️ Tech Stack</a> •
+  <a href="#architecture">🏗️ Architecture</a> •
+  <a href="#quick-start">📚 Quick Start</a>
+</p>
+
+<p align="center">
+  <a href="https://app.netlify.com/projects/golf-shot-distances/deploys" style="text-decoration: none;">
+    <img src="https://api.netlify.com/api/v1/badges/6e5166de-72ae-4ef3-9810-be1900038089/deploy-status" alt="Netlify Status" />
+  </a>
+  <img src="https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-7-646cff?logo=vite" alt="Vite 7" />
+  <img src="https://img.shields.io/badge/Google%20Sheets-API-34a853?logo=googlesheets" alt="Google Sheets API" />
+  <img src="https://img.shields.io/badge/PWA-enabled-purple?logo=pwa" alt="PWA enabled" />
+</p>
+
+<p align="center">
+  <img src="./public/Golf-Shot-Distances.png" alt="Golf Shot Distances Screenshot" height="520"/>
+</p>
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Project Overview](#project-overview)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+  - [Development Start](#development-start)
+  - [Production Build and Preview](#production-build-and-preview)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Google Sheets Setup](#google-sheets-setup)
+- [API Endpoints](#api-endpoints)
+- [Project Structure](#project-structure)
+- [PWA Notes](#pwa-notes)
+- [Troubleshooting](#troubleshooting)
+- [Security Notes](#security-notes)
+
+## Project Overview
+
+Golf Shot Distances is a React + TypeScript app for managing golf club data and making faster distance decisions on the course.
+
+The app pulls club data from Google Sheets, calculates and visualizes distance components (flat carry, roll, and overhit risk), and recommends a club for a given yardage while accounting for selected course and air conditions.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Key Features
+
+- **Distance visualization**: Vertical composed chart with stacked distance bars and total-distance trend line.
+- **Condition-aware planning**: Adjustments for dry/wet course conditions and normal/rainy/windy air conditions.
+- **Club recommendation**: Suggests the nearest club for entered distance and highlights it in the chart.
+- **Interactive editing**: Add, edit, and delete clubs using an in-app modal with calculated-field support.
+- **Mobile-friendly behavior**: Touch-friendly controls, responsive chart sizing, and mobile pinned tooltips.
+- **Legend and tooltips**: Rich metric explanations for carry, roll, total distance, and overhit risk.
+- **PWA-ready build**: Manifest and service worker configured through `vite-plugin-pwa`.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Tech Stack
+
+**Frontend**
+- **React 18** with functional components and hooks
+- **TypeScript** for static typing
+- **Vite** for dev/build tooling
+- **Recharts** for chart rendering
+- **Tailwind CSS** for utility-first styling
+- **Axios** for API requests
+
+**Backend and Data**
+- **Google Sheets API** as the persistent data store
+- **Netlify Functions** for production serverless API routes
+- **Express backend** (local) for full CRUD development workflow
+
+**Deployment**
+- **Netlify** for hosting, redirects, and serverless function runtime
+- **Vite PWA Plugin** for installable app experience
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Architecture
+
+The app uses a simple frontend + API + Google Sheets architecture:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                  Frontend (React + Vite)                │
+│  Chart UI + club editor + recommendation logic          │
+└───────────────────────────┬──────────────────────────────┘
+                            │ HTTP (/api/clubs)
+                            ▼
+┌──────────────────────────────────────────────────────────┐
+│                    API Layer                            │
+│  - Netlify function (production)                        │
+│  - Express server on localhost:4000 (local dev)         │
+└───────────────────────────┬──────────────────────────────┘
+                            │ Google Sheets API
+                            ▼
+┌──────────────────────────────────────────────────────────┐
+│                   Google Sheets                          │
+│  Club rows (distance fields, metadata, comments, order) │
+└──────────────────────────────────────────────────────────┘
+```
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Quick Start
+
+### Development Start
+
+1. Install frontend dependencies:
+   ```bash
+   npm install
+   ```
+2. Install local backend dependencies:
+   ```bash
+   cd backend
+   npm install
+   cd ..
+   ```
+3. Start the local backend API (terminal 1):
+   ```bash
+   cd backend
+   node index.js
+   ```
+4. Start the frontend (terminal 2):
+   ```bash
+   npm run dev
+   ```
+5. Open the app at `http://localhost:5173`.
+
+The frontend expects local API requests at `http://localhost:4000/api/clubs` during development.
+
+### Production Build and Preview
+
+```bash
+npm install
+npm run build
+npm run preview
+```
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Configuration
+
+### Environment Variables
+
+For **Netlify function** usage (`netlify/functions/api.js`), set:
+
+```env
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+GOOGLE_SPREADSHEET_ID=your_google_sheet_id
+GOOGLE_SHEET_TAB=your_sheet_tab_name
+```
+
+For **local backend** usage (`backend/index.js`), create `backend/.env` from `backend/.env.example`:
+
+```env
+GOOGLE_SERVICE_ACCOUNT_KEY_PATH=./service-account.json
+GOOGLE_SHEET_ID=your_google_sheet_id_here
+GOOGLE_SHEET_TAB=your_google_sheet_name
+PORT=4000
+```
+
+### Google Sheets Setup
+
+1. Create a Google Sheet and use row 1 as headers.
+2. Add club columns used by the app (club info, distance values, comments, order).
+3. Create a Google Cloud service account and enable Google Sheets API.
+4. Share the sheet with the service account email.
+5. Provide credentials through environment variables (Netlify) or a local key file path (backend).
+
+> [Back to Table of Contents](#table-of-contents)
+
+## API Endpoints
+
+### Production API (`netlify/functions/api.js`)
+
+- `GET /api/clubs` - Fetch all clubs from Google Sheets.
+- `PUT /api/clubs/:clubName` - Update an existing club row.
+
+### Local Development API (`backend/index.js`)
+
+- `GET /api/clubs` - Fetch clubs.
+- `POST /api/clubs` - Create a new club.
+- `PUT /api/clubs/:club` - Update a club.
+- `DELETE /api/clubs/:club` - Delete a club.
+
+### Mock/Test API (`netlify/functions/api-simple.js`)
+
+- `GET /api-simple/clubs` - Returns mock club data for connectivity checks.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Project Structure
+
+```text
+golf-shot-distances/
+├── src/
+│   ├── App.tsx
+│   ├── components/
+│   └── index.css
+├── public/
+│   ├── Golf-Shot-Distances-Logo.png
+│   └── Golf-Shot-Distances.png
+├── netlify/
+│   └── functions/
+├── backend/
+│   ├── index.js
+│   └── .env.example
+├── vite.config.ts
+├── netlify.toml
+└── package.json
+```
+
+> [Back to Table of Contents](#table-of-contents)
+
+## PWA Notes
+
+This project uses `vite-plugin-pwa` with:
+- Auto-update service worker registration
+- Manifest with standalone display mode
+- `pwa-192x192.png` and `pwa-512x512.png` icon entries
+- Included static assets such as `Golf-Shot-Distances-Logo.png`
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Troubleshooting
+
+- **App shows "Backend not available" in development**: confirm local API is running on port `4000`.
+- **Google Sheets errors**: verify service account access, spreadsheet ID, and tab name.
+- **Netlify 500 errors**: validate `GOOGLE_SERVICE_ACCOUNT_KEY`, `GOOGLE_SPREADSHEET_ID`, and `GOOGLE_SHEET_TAB`.
+- **Build issues**: re-run `npm install`, then `npm run build`, and check linting with `npm run lint`.
+
+> [Back to Table of Contents](#table-of-contents)
+
+## Security Notes
+
+- Never commit service-account credentials or `.env` files.
+- Keep Google service account keys in secure environment variables.
+- Rotate keys if you suspect exposure.
+- Restrict service account permissions to only what is needed.
+
+> [Back to Table of Contents](#table-of-contents)
+<p align="center">
+  <img src="https://bangsluke-assets.netlify.app/images/project-logos/Golf-Shot-Distances-Logo.png" alt="Golf Shot Distances Logo" width="200"/>
 </p>
 
 # Golf Shot Distances
@@ -345,7 +865,7 @@ The site is configured as a PWA and can be added to the iOS home screen. The man
 |------|------|---------|
 | `pwa-192x192.png` | 192×192 px | Web app manifest |
 | `pwa-512x512.png` | 512×512 px | Web app manifest |
-| `Golf-Shot-Distances.png` | 180×180 px recommended | iOS home screen icon |
+| `Golf-Shot-Distances-Logo.png` | 180×180 px recommended | iOS home screen icon |
 
 Generate these from a single high-resolution PNG or SVG using [PWA Assets Generator](https://vite-pwa-org.netlify.app/assets-generator/) or [PWA Builder Image Generator](https://www.pwabuilder.com/imageGenerator), then place the files in `public/`. Until these exist, the app still builds; the home screen may show a default icon.
 
@@ -410,3 +930,4 @@ Generate these from a single high-resolution PNG or SVG using [PWA Assets Genera
 ---
 
 **Happy golfing! 🏌️‍♂️**
+-->
