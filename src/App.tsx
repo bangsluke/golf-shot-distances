@@ -498,7 +498,7 @@ function App() {
       )}
       <div className="golf-main w-full max-w-5xl mx-auto" style={{ maxWidth: '100vw', overflowX: 'hidden' }}>
         <header className="flex items-center justify-center gap-2 mb-2 sm:mb-4 md:mb-6">
-          <img src="/Golf-Shot-Distances.png" alt="" className="h-8 w-auto sm:h-10" />
+          <img src="/Golf-Shot-Distances-Logo.png" alt="" className="h-8 w-auto sm:h-10" />
           <h1 className="text-base sm:text-lg md:text-2xl font-bold text-center text-white m-0">
             Average Club Distances
           </h1>
@@ -507,7 +507,7 @@ function App() {
         <div className="flex flex-col gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6 md:mb-8">
           {/* Course conditions (left) and Air conditions (right) - two columns, same vertical height */}
           <div className="flex flex-row justify-center gap-4 sm:gap-6 md:gap-8 items-stretch w-full">
-            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center">
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-end">
               <div ref={courseLabelRef} className="relative mb-4 sm:mb-3">
                 <label 
                   htmlFor="course-conditions" 
@@ -536,7 +536,7 @@ function App() {
               </select>
               <div className="text-xs font-semibold mt-2" style={{ color: rollLabelColor }}>{rollLabel}</div>
             </div>
-            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center sm:items-start">
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-start">
               <div ref={airLabelRef} className="relative mb-4 sm:mb-3">
                 <label 
                   htmlFor="air-conditions" 
