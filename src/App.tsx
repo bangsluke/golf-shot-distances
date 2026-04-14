@@ -507,7 +507,7 @@ function App() {
         <div className="flex flex-col gap-2 sm:gap-4 md:gap-6 mb-3 sm:mb-6 md:mb-8">
           {/* Course conditions (left) and Air conditions (right) - two columns, same vertical height */}
           <div className="flex flex-row justify-center gap-4 sm:gap-6 md:gap-8 items-stretch w-full">
-            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center">
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-end">
               <div ref={courseLabelRef} className="relative mb-4 sm:mb-3">
                 <label 
                   htmlFor="course-conditions" 
@@ -536,7 +536,7 @@ function App() {
               </select>
               <div className="text-xs font-semibold mt-2" style={{ color: rollLabelColor }}>{rollLabel}</div>
             </div>
-            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-center sm:items-start">
+            <div className="flex flex-col gap-1 sm:gap-2 flex-1 max-w-[50%] min-w-0 items-start">
               <div ref={airLabelRef} className="relative mb-4 sm:mb-3">
                 <label 
                   htmlFor="air-conditions" 
