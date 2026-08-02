@@ -26,6 +26,19 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname === '/api/clubs',
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'clubs-api',
+              expiration: {
+                maxEntries: 1,
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+            },
+          },
+        ],
       },
     }),
   ],
