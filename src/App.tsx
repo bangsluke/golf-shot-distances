@@ -11,6 +11,7 @@ import { ClickableYAxisTick } from './components/ClickableYAxisTick';
 import { CustomLegend } from './components/CustomLegend';
 import { CourseInfoTooltip } from './components/CourseInfoTooltip';
 import { AirInfoTooltip } from './components/AirInfoTooltip';
+import { readClubsCache, writeClubsCache } from './lib/clubsCache';
 import packageJson from '../package.json';
 
 import './index.css';
@@ -67,8 +68,8 @@ interface TooltipRendererProps {
 }
 
 function App() {
-  const [clubs, setClubs] = useState<ClubData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [clubs, setClubs] = useState<ClubData[]>(() => readClubsCache()?.clubs ?? []);
+  const [loading, setLoading] = useState(() => !readClubsCache());
   const [reordering, setReordering] = useState(false);
   const [editClub, setEditClub] = useState<ClubData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -90,28 +91,40 @@ function App() {
   const courseLabelRef = useRef<HTMLDivElement>(null);
   const airLabelRef = useRef<HTMLDivElement>(null);
 
-  const fetchClubs = async () => {
-    setLoading(true);
-    setApiError(null);
+  const fetchClubs = async (options?: { soft?: boolean }) => {
+    const soft = options?.soft === true;
+    if (!soft) {
+      setLoading(true);
+      setApiError(null);
+    }
     try {
       const res = await axios.get(API_URL);
       setClubs(res.data);
+      writeClubsCache(res.data);
+      setApiError(null);
       const needsReordering = res.data.some((club: ClubData) => !club['ClubOrder'] || isNaN(parseInt(club['ClubOrder'])));
       if (needsReordering) {
         await reorderClubs();
       }
     } catch (error) {
-      setClubs([]);
-      const isNetwork = axios.isAxiosError(error) && (error.code === 'ERR_NETWORK' || error.message === 'Network Error');
-      setApiError(isNetwork ? 'Backend not available. Start the API or use production.' : 'Failed to load clubs.');
-      if (!isNetwork) console.error('Failed to fetch clubs:', error);
+      if (!soft) {
+        setClubs([]);
+        const isNetwork = axios.isAxiosError(error) && (error.code === 'ERR_NETWORK' || error.message === 'Network Error');
+        setApiError(isNetwork ? 'Backend not available. Start the API or use production.' : 'Failed to load clubs.');
+        if (!isNetwork) console.error('Failed to fetch clubs:', error);
+      } else if (!axios.isAxiosError(error) || (error.code !== 'ERR_NETWORK' && error.message !== 'Network Error')) {
+        console.error('Failed to refresh clubs:', error);
+      }
     } finally {
-      setLoading(false);
+      if (!soft) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchClubs();
+    const cached = readClubsCache();
+    fetchClubs({ soft: !!cached });
   }, []);
 
 
