@@ -1,0 +1,51 @@
+# Auto-merges low-risk dependency PRs, and any Snyk/Dependabot PR you label `snyk-approved`.
+# Merges happen through GitHub auto-merge, so they wait for required status checks to pass.
+# Requires: Settings > General > "Allow auto-merge" enabled on this repository.
+name: Dependency auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Dependabot patch bumps, and minor bumps of packages already at 1.0 or above.
+  dependabot-low-risk:
+    if: github.event.action != 'labeled' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          (steps.metadata.outputs.update-type == 'version-update:semver-minor' &&
+           !startsWith(steps.metadata.outputs.previous-version, '0.'))
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Your approval button: label a Snyk or Dependabot PR `snyk-approved`.
+  owner-approved:
+    if: >-
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'snyk-approved' &&
+      github.event.sender.login == github.repository_owner &&
+      (github.event.pull_request.user.login == 'dependabot[bot]' ||
+       github.event.pull_request.user.login == 'snyk-bot' ||
+       startsWith(github.event.pull_request.title, '[Snyk]'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
