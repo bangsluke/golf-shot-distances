@@ -1,6 +1,7 @@
 # Auto-merges low-risk dependency PRs, and any Snyk/Dependabot PR you label `snyk-approved`.
-# Merges happen through GitHub auto-merge, so they wait for required status checks to pass.
-# Requires: Settings > General > "Allow auto-merge" enabled on this repository.
+# Uses GitHub auto-merge where the repo allows it (Settings > General > "Allow auto-merge").
+# Where it doesn't (for example private repos on GitHub Free), it waits for the PR's other
+# checks to finish and merges directly, or stops if any check fails.
 name: Dependency auto-merge
 
 on:
@@ -10,6 +11,25 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  checks: read
+  statuses: read
+
+env:
+  MERGE_SCRIPT: |
+    set -euo pipefail
+    if gh pr merge --auto --squash "$PR_URL"; then exit 0; fi
+    echo "Auto-merge isn't available here; waiting for checks, then merging directly."
+    sleep 30
+    for i in $(seq 1 40); do
+      states=$(gh pr checks "$PR_URL" --json name,bucket -q '[.[] | select(.name != "dependabot-low-risk" and .name != "owner-approved") | .bucket] | unique | join(",")') || true
+      case ",$states," in
+        *,fail,*|*,cancel,*) echo "A check failed, so not merging."; exit 1 ;;
+        *,pending,*) sleep 30 ;;
+        *) gh pr merge --squash "$PR_URL"; exit 0 ;;
+      esac
+    done
+    echo "Checks were still pending after 20 minutes, so not merging."
+    exit 1
 
 jobs:
   # Dependabot patch bumps, and minor bumps of packages already at 1.0 or above.
@@ -23,12 +43,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge
+      - name: Merge
         if: >-
           steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
           (steps.metadata.outputs.update-type == 'version-update:semver-minor' &&
            !startsWith(steps.metadata.outputs.previous-version, '0.'))
-        run: gh pr merge --auto --squash "$PR_URL"
+        run: bash -c "$MERGE_SCRIPT"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,8 +64,8 @@ jobs:
        startsWith(github.event.pull_request.title, '[Snyk]'))
     runs-on: ubuntu-latest
     steps:
-      - name: Enable auto-merge
-        run: gh pr merge --auto --squash "$PR_URL"
+      - name: Merge
+        run: bash -c "$MERGE_SCRIPT"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
